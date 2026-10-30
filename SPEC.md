@@ -424,3 +424,30 @@ Shrink the five equal-sized two-column function tiles in both width and default 
 ## 28. User-approved version baseline — 30 October 2026
 
 The user approved the current implementation as version 1.0.0 and explicitly requested committing and pushing it to the existing GitHub repository. Earlier 1.x labels in this document and development checkpoints describe prototype iterations; do not rewrite their historical evidence. Current package version is 1.0.0+16: preserve the monotonically increasing Android build code so the APK can update prior test installs without clearing data. Tag the source baseline v1.0.0. This version designation does not add iOS configuration, store publishing, production signing, cloud sync or previously deferred features.
+
+## 29. Replacement phone launcher artwork — 30 October 2026
+
+Use the user's newly supplied ChatGPT Image Oct 30, 2026, 03_42_35 PM.png as the phone launcher icon, replacing the earlier checkmark illustration. Preserve the exact source bytes at assets/branding/launcher-source.png (SHA-256 D36A079B622881D2ED4590FAD9137CAF3561CBA4AE7635329C18C4DBC39AFA30). Package it using the existing deterministic launcher generator into five legacy and five transparent adaptive foreground resources, retaining safe margins and the existing white adaptive background. No generated/redrawn replacement artwork or app-flow change is requested.
+
+Keep the user-visible version 1.0.0; increment Android build code to 17 for an in-place update. The prior v1.0.0 source tag is not moved by this icon update.
+
+
+## 30. Separate compact 40-question sheet (30 October 2026)
+
+The 5–20 question PDF family is deferred. Add `abcd-40-compact`, version 1, alongside the existing ten-question template. The compact sheet supports full-frame scanning only; visibly disable answer-only scanning for it and enforce this restriction in camera state. Capture the complete small OMR frame, not the entire A4 document. Read its three-digit exam code, preserving leading zeros. Do not scan, request or invent a candidate number or handwritten anonymous ID. Store candidate as unknown and retain persistent per-subject paper numbering.
+
+Allow 1–40 configured questions. Grade only the contiguous range 1..count, with the existing per-question points and mark policies. Marks beyond count do not score, subtract points, trigger review or appear in saved response lists. A mismatched/ambiguous code requires explicit teacher correction; result keys must belong to the scanned template. Do not use the initially selected code as an automatic fallback in this full mode.
+
+Keep the ten-question template, its two scan modes, stored keys and history unchanged in meaning. Expand key storage for compact sheets while retaining existing thirty-slot keys. Preserve the source PDF and cropped raster baseline. The supplied source is visibly soft; implementation must not imply that synthetic recognition tests establish real-photo accuracy.
+
+
+## 31. Compact real-photo alignment correction (30 October 2026)
+
+Handle modest paper curvature using bounded, unique matching of all twelve compact-template markers followed by piecewise correction in the rectified plane. Retain full-frame-only scanning, unknown candidate numbers and count-limited grading. Measure compact bubble interiors/backgrounds with template-specific radii; do not reuse ten-question circle dimensions. Apply conservative code-column print-noise correction while retaining ambiguous/multiple-digit review gates. Continue rejecting incomplete frames and wrong templates. The first physical-photo regression is code 132 with responses BCABDBAC for eight active questions. This fixture and its transformed variants do not establish general camera accuracy.
+
+
+## 32. User acceptance and source checkpoint (30 October 2026)
+
+The user reported that build 19 runs satisfactorily in real-device testing and explicitly requested updating the specification and pushing the source. The accepted working package is 1.0.0+19, including the replacement launcher icon, independent compact 40-question template and real-photo recognition corrections in sections 29–31. The compact sheet remains full-frame-only, reads the three-digit exam code, does not read candidate numbers and grades only questions 1..count. The separate ten-question template retains both scan modes and its existing behavior.
+
+Record this as user acceptance of the current tested workflow, not a broad recognition-accuracy certification or a Google Play release. Retain the original v1.0.0 tag at its existing release-baseline commit; push the new checkpoint to origin/main without moving that tag. Source, assets, tests and English specifications are included. Generated APKs, local SDK configuration, caches and signing keys remain excluded. The latest universal APK is dist/SiroMix-build-19-universal.apk (SHA-256 C214115DA807133EA9A382701F9B93BC8E5AB68E2DFE1076AF9F46372C11AD5E). Automated evidence remains 112 passing Flutter tests, clean Flutter analysis, successful universal Android build, APK signature verification and 16 KB ZIP alignment.

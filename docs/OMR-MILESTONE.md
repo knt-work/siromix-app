@@ -54,7 +54,7 @@ No physical Xiaomi camera has been accessed or tested by the agent. The user mus
 
 ## Phone test procedure
 
-1. Install `dist/SiroMix-build-16-universal.apk` over the previous build; do not uninstall or clear app data.
+1. Install `dist/SiroMix-build-19-universal.apk` over the previous build; do not uninstall or clear app data.
 2. Open the grading tool and create/select a key using **A4 – 10 câu trắc nghiệm và tự luận**. Configure 1–10 questions, their correct answers, and points. Save.
 3. Print page 1 of the original PDF. Ensure all four outer black markers are present. Fill the candidate number, exam code, and test answers.
 4. Select the key, open the camera, grant permission, and capture the flat, well-lit sheet with all four outer markers visible. Page 2 and the written-response areas are ignored.
@@ -62,3 +62,14 @@ No physical Xiaomi camera has been accessed or tested by the agent. The user mus
 6. Repeat with blank, multiple-mark, faint, and erased answers. Report mismatches or repeated recapture failures for calibration.
 
 Keep real-paper test images and expected readings available during calibration. Saving a permanent image gallery, grading history, export, AI, and support for arbitrary templates remain outside this milestone.
+
+
+## Compact 40-question template (30 October 2026)
+
+Build 18 adds the independent compact frame template, full scan only, no candidate recognition, with active question counts 1–40. Read `docs/templates/abcd-40-compact-v1.md` for current geometry, source-raster limitations and validation. The older ten-question behavior remains available. All 108 automated tests pass and analysis is clean. Synthetic results do not establish real print/camera accuracy.
+
+
+Build 19 corrects compact alignment and bubble measurement on the first physical-photo fixture. See the real-photo correction section in docs/templates/abcd-40-compact-v1.md. This supersedes the build 18 statement that only synthetic compact fixtures have been tested.
+
+
+User acceptance, 30 October 2026: the user reported build 19 runs satisfactorily in real-device testing and requested pushing the source checkpoint. Earlier pending-phone-verification notes are historical; this does not imply broad device/photo accuracy certification. See SPEC.md section 32.

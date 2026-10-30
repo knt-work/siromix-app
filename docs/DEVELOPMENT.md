@@ -266,3 +266,36 @@ The user designated the current application as version 1.0.0 and authorized comm
 Updated pubspec.yaml and build script to 1.0.0+16. Android code 16 remains greater than all prior test builds, allowing updates without deleting installed data despite the user-visible version reset. README now describes the current feature set, reproducible run/build commands, Android-only configuration, development signing and deferred features. Source behavior is unchanged from the validated 1.9.0 checkpoint (98 regression tests passed, final analysis clean); only release metadata/documentation and trailing blank lines changed.
 
 Built universal APK with ARM64/ARMv7/x86_64, versionName 1.0.0/versionCode 16/min SDK 24. Signature and 16 KB ZIP alignment passed. Local packages: dist/SiroMix-build-16-universal.apk and dist/SiroMix-1.0.0.apk, SHA-256 EE146833CF440483F9435DB4A99063CD2C2AA6F19F87E3CB415088F7FE4F1B36. APK output is intentionally ignored by Git; source/assets/tests/specifications and data licensing are included. No GitHub binary Release or store publishing was requested.
+
+## User-supplied replacement launcher icon — build 1.0.0+17
+
+Replaced assets/branding/launcher-source.png with the exact supplied PNG from Downloads (ChatGPT Image Oct 30, 2026, 03_42_35 PM.png). The new image contains the blue rounded-square paper/shuffle artwork. Source SHA-256 D36A079B622881D2ED4590FAD9137CAF3561CBA4AE7635329C18C4DBC39AFA30. No AI redraw or image-content editing was performed; the existing Pillow packaging script regenerates five legacy icons and five alpha-preserving adaptive foreground resources, keeping safe margins and the established white launcher background.
+
+Validation: source bytes match the attachment, all ten resources have correct density dimensions and adaptive transparency, and the high-density legacy icon was visually inspected. The release APK builds successfully, passes signature and 16 KB ZIP alignment checks, and contains ARM64/ARMv7/x86_64. No runtime code changed, so the full behavioral test suite was not repeated for this asset-only update. Manifest icon remains @mipmap/ic_launcher.
+
+Version remains 1.0.0, Android code increments to 17 for updates over build 16. Artifact: dist/SiroMix-build-17-universal.apk; SHA-256 EDCC39609A0849AD108314EF4B6B331979DA17BAAE24E99FA41CEC23D223B632, sidecar saved. README and build script reference the current package. Existing v1.0.0 Git tag is unchanged; this new icon change is local and has not been committed/pushed in this turn.
+
+
+## Compact 40-question checkpoint (30 October 2026, build 18)
+
+Added independent full-frame-only compact 40-question template, source PDF archive and baseline. Code recognition is three-digit, unknown candidates use existing subject numbering. The result screen filters keys by template, grades only the configured prefix and ignores inactive uncertain marks. Existing 10-question behavior remains supported. Data permits 30/40-slot keys without discarding old answers or snapshots. Source-raster blur is unchanged; physical-photo calibration remains necessary. See docs/templates/abcd-40-compact-v1.md and test/compact_test.dart.
+
+Validation: all 108 Flutter tests pass (`build/compact-all-tests.log`); `flutter analyze` reports no issues (`build/compact-analysis.log`). The original source and archived PDF share SHA-256 D816502049366ED6D6792402EA79B1312A6F2ADCE1489BE04FCF85073DFB86C6. No physical-camera acceptance run has been performed for this template. Existing local icon changes are retained; these changes have not been committed or pushed.
+
+Build 18 universal APK succeeded (Android ARM64/ARMv7/x86_64, versionName 1.0.0, versionCode 18, minimum SDK 24, target SDK 36). APK signature verification and 16 KB ZIP alignment checks passed. SHA-256: D3C0840B81969DAA0F761868446F2823D14432A3B387254DAB26A47FB8E4F1F5. Artifact: dist/SiroMix-build-18-universal.apk. This build was not installed on an emulator or physical device during this change.
+
+
+## Compact real-photo correction (30 October 2026, build 19)
+
+Reproduced build 18 failure on the supplied physical photograph: the rigid local marker test rejected a gently curved page before code classification. Added bounded twelve-marker matching and mesh correction, compact-specific density dimensions and bounded code-column print-noise compensation. Low-resolution compact matching keeps more candidates and tolerates antialiased squares; ten-question defaults stay unchanged. Real fixture and rotated/JPEG/probe derivatives are regression tests; the original reads code 132 and responses BCABDBAC. Photos are never retained by the application; the test fixture is a developer reference. All build 18 documentation above is historical; native phone verification of build 19 remains pending.
+
+Validation: all 112 Flutter tests pass (`build/compact-real-all-tests.log`), including the original physical photo, rotated/JPEG and low-resolution probe derivatives, ambiguous digit gates and the ten-question regression suite. Photo fixture SHA-256: C45901FE4EF5D872BD2F3C4C958325E136034163282D662805C80093C647CCE8.
+
+Final checks: Flutter analysis clean (build/compact-real-analysis.log); universal APK build 19 succeeded with ARM64/ARMv7/x86_64. Signature verification and 16 KB ZIP alignment passed. SHA-256: C214115DA807133EA9A382701F9B93BC8E5AB68E2DFE1076AF9F46372C11AD5E. Artifact: dist/SiroMix-build-19-universal.apk. No emulator/phone installation was performed during this fix; successful image-fixture recognition still needs confirmation through the phone camera UX.
+
+
+## User-accepted build 19 and Git source checkpoint (30 October 2026)
+
+The user confirmed that this version runs satisfactorily during their real-device test, then requested a specification update and source push. This supersedes the earlier pending-phone-verification notes for the tested workflow. No device model or wider photo/device coverage is inferred from this confirmation. No runtime change or version increment is required for this documentation checkpoint: package version remains 1.0.0+19.
+
+Include all approved local work since the original v1.0.0 baseline: replacement launcher assets, compact-template assets/source PDF, template registry/editor/data changes, full-only compact scan flow, bounded marker matching and mesh rectification, template-specific bubble measurements, digit noise compensation, regression fixtures/tests and diagnostic tool. Existing automated validation is 112 passing tests and clean analysis; build 19 signature/ABI/16 KB checks passed. Documentation-only acceptance updates do not require repeating that suite. APKs remain in ignored dist/, and the original v1.0.0 tag must not move. Push the new commit to origin/main.

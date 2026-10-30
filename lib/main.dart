@@ -369,10 +369,13 @@ class _AppHomeState extends State<AppHome> {
 
   Future<void> openScan() async {
     if (path.length != 4) return;
-    final chosen = await chooseScanMode(context);
+    final keys = repo.data.codes(path);
+    final template =
+        keys[selectedCode]?.template ??
+        (keys.isEmpty ? SheetTemplate.ten : keys.values.first.template);
+    final chosen = await chooseScanMode(context, template: template);
     if (chosen == null || !mounted) return;
     scanMode = chosen;
-    final keys = repo.data.codes(path);
     if (keys.isNotEmpty && !keys.containsKey(selectedCode)) {
       selectedCode = keys.keys.first;
     }
@@ -781,10 +784,19 @@ class _AppHomeState extends State<AppHome> {
         items: keys.keys
             .map((c) => DropdownMenuItem(value: c, child: Text(c)))
             .toList(),
-        onChanged: (v) => setState(() => selectedCode = v),
+        onChanged: (v) => setState(() {
+          selectedCode = v;
+          if (keys[v]?.template.supportsAnswersOnly == false) {
+            scanMode = ScanMode.full;
+          }
+        }),
       ),
       if (key != null)
         note(key.template.name, icon: Icons.description_outlined),
+      if (key?.template == SheetTemplate.compact)
+        note(
+          'Chỉ quét toàn khung trắc nghiệm và mã đề. Chấm câu 1–${key!.count}; các câu còn lại được bỏ qua. Số báo danh: Không xác định.',
+        ),
       if (scanMode != null)
         Row(
           children: [
@@ -814,7 +826,7 @@ class _AppHomeState extends State<AppHome> {
       ),
       if (key != null && !key.template.readable)
         note(
-          'Mẫu cũ chưa hỗ trợ quét. Chọn loại phiếu 10 câu trong cấu hình đề.',
+          'Mẫu cũ chưa hỗ trợ quét. Chọn mẫu 10 câu hoặc phiếu gọn 40 câu trong cấu hình đề.',
           warning: true,
         ),
       if (key != null && !key.complete)
@@ -1017,6 +1029,7 @@ class _KeyEditorState extends State<KeyEditor> {
                   items:
                       [
                             SheetTemplate.ten,
+                            SheetTemplate.compact,
                             if (keyData.templateId == SheetTemplate.legacy.id)
                               SheetTemplate.legacy,
                           ]
@@ -1048,6 +1061,22 @@ class _KeyEditorState extends State<KeyEditor> {
                             return;
                           }
                           setState(() {
+                            if (chosen.capacity > keyData.answers.length) {
+                              final extra =
+                                  chosen.capacity - keyData.answers.length;
+                              keyData.answers.addAll(List.filled(extra, ''));
+                              keyData.points.addAll(
+                                List.filled(extra, keyData.common),
+                              );
+                              points.addAll(
+                                List.generate(
+                                  extra,
+                                  (_) => TextEditingController(
+                                    text: '${keyData.common}',
+                                  ),
+                                ),
+                              );
+                            }
                             keyData.templateId = id;
                             keyData.templateVersion = 1;
                             keyData.count = current;

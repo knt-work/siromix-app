@@ -5,6 +5,8 @@ import 'package:image/image.dart' as img;
 
 import 'data.dart';
 
+part 'compact_omr.dart';
+
 class OmrException implements Exception {
   const OmrException(this.message);
   final String message;
@@ -94,7 +96,12 @@ class _Marker {
   final int area;
 }
 
-List<_Marker> _markers(_Gray gray, {int minimumSize = 9}) {
+List<_Marker> _markers(
+  _Gray gray, {
+  int minimumSize = 9,
+  int maximumCandidates = 16,
+  double minimumFill = .80,
+}) {
   final seen = Uint8List(gray.pixels.length),
       queue = Int32List(gray.pixels.length);
   final found = <_Marker>[];
@@ -129,12 +136,12 @@ List<_Marker> _markers(_Gray gray, {int minimumSize = 9}) {
         h < gray.height * .13 &&
         w / h > .55 &&
         w / h < 1.8 &&
-        tail / (w * h) > .80) {
+        tail / (w * h) > minimumFill) {
       found.add(_Marker((minX + maxX) / 2, (minY + maxY) / 2, tail));
     }
   }
   found.sort((a, b) => b.area.compareTo(a.area));
-  return found.take(16).toList();
+  return found.take(maximumCandidates).toList();
 }
 
 // Solve a homography mapping canonical coordinates to the photographed sheet.
@@ -286,8 +293,12 @@ _Gray _load(Uint8List bytes) {
   return _Gray.fromImage(image);
 }
 
-_Gray _warp(_Gray source, List<double> h) {
-  const w = TenSheetGeometry.width, hh = TenSheetGeometry.height;
+_Gray _warp(
+  _Gray source,
+  List<double> h, {
+  int w = TenSheetGeometry.width,
+  int hh = TenSheetGeometry.height,
+}) {
   final data = Uint8List(w * hh);
   for (var y = 0; y < hh; y++) {
     for (var x = 0; x < w; x++) {
@@ -302,12 +313,22 @@ _Gray _warp(_Gray source, List<double> h) {
   return _Gray(w, hh, data);
 }
 
-double _density(_Gray g, double x, double y) {
+double _density(
+  _Gray g,
+  double x,
+  double y, {
+  int coreRadius = 6,
+  int backgroundInner = 13,
+  int backgroundOuter = 15,
+}) {
   final bg = <double>[];
-  for (var dy = -15; dy <= 15; dy += 2) {
-    for (var dx = -15; dx <= 15; dx += 2) {
+  for (var dy = -backgroundOuter; dy <= backgroundOuter; dy += 2) {
+    for (var dx = -backgroundOuter; dx <= backgroundOuter; dx += 2) {
       final r = dx * dx + dy * dy;
-      if (r >= 169 && r <= 225) bg.add(g.at(x + dx, y + dy));
+      if (r >= backgroundInner * backgroundInner &&
+          r <= backgroundOuter * backgroundOuter) {
+        bg.add(g.at(x + dx, y + dy));
+      }
     }
   }
   bg.sort();
@@ -319,9 +340,9 @@ double _density(_Gray g, double x, double y) {
   }
   double sum = 0;
   var n = 0;
-  for (var dy = -6; dy <= 6; dy++) {
-    for (var dx = -6; dx <= 6; dx++) {
-      if (dx * dx + dy * dy <= 36) {
+  for (var dy = -coreRadius; dy <= coreRadius; dy++) {
+    for (var dx = -coreRadius; dx <= coreRadius; dx++) {
+      if (dx * dx + dy * dy <= coreRadius * coreRadius) {
         sum += (1 - g.at(x + dx, y + dy) / white).clamp(0, 1);
         n++;
       }

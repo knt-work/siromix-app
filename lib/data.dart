@@ -30,8 +30,12 @@ class ExamKey {
     List<double>? points,
   }) : count =
            count ?? SheetTemplate.find(templateId, templateVersion).capacity,
-       answers = answers ?? List.filled(30, ''),
-       points = points ?? List.filled(30, 0.25);
+       answers =
+           answers ??
+           List.filled(templateId == SheetTemplate.compact.id ? 40 : 30, ''),
+       points =
+           points ??
+           List.filled(templateId == SheetTemplate.compact.id ? 40 : 30, 0.25);
   int count;
   String templateId;
   int templateVersion;
@@ -70,8 +74,9 @@ class ExamKey {
         .toList();
     if (count < 1 ||
         count > template.capacity ||
-        answers.length != 30 ||
-        points.length != 30 ||
+        ![30, 40].contains(answers.length) ||
+        points.length != answers.length ||
+        count > answers.length ||
         !common.isFinite ||
         common < 0 ||
         points.any((v) => !v.isFinite || v < 0) ||

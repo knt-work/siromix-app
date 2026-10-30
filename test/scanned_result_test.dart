@@ -421,4 +421,74 @@ void main() {
       expect(r.data.counters, isEmpty);
     },
   );
+  for (final scenario in [(400.0, 1.0), (320.0, 1.8)]) {
+    testWidgets(
+      'response crops remain matched to rows at ${scenario.$1}px and text scale ${scenario.$2}',
+      (t) async {
+        t.view.physicalSize = Size(scenario.$1, 1400);
+        t.view.devicePixelRatio = 1;
+        addTearDown(t.view.resetPhysicalSize);
+        addTearDown(t.view.resetDevicePixelRatio);
+        final r = await repo();
+        final scan = read(uncertain: false);
+        Uint8List crop(int shade) => Uint8List.fromList(
+          img.encodePng(
+            img.Image(width: 205, height: 46)
+              ..clear(img.ColorRgb8(shade, shade, shade)),
+          ),
+        );
+        final first = crop(190), second = crop(230);
+        scan.answerCrops[0] = first;
+        scan.answerCrops[1] = second;
+        await t.pumpWidget(
+          MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(scenario.$2)),
+              child: child!,
+            ),
+            home: ScannedResult(repository: r, contextPath: path, read: scan),
+          ),
+        );
+        await t.pumpAndSettle();
+        for (var i = 0; i < 2; i++) {
+          final thumb = find.byKey(ValueKey('answer-thumbnail-$i'));
+          await t.scrollUntilVisible(
+            thumb,
+            300,
+            scrollable: find.byType(Scrollable).first,
+          );
+          await t.pumpAndSettle();
+          final image = t.widget<Image>(thumb);
+          expect(
+            (image.image as MemoryImage).bytes,
+            same(i == 0 ? first : second),
+          );
+          expect(image.semanticLabel, 'Ảnh đáp án câu ${i + 1}');
+          expect(t.takeException(), isNull);
+        }
+        final row = find.byKey(const ValueKey('answer-row-1'));
+        final review = find.descendant(of: row, matching: find.text('Xem lại'));
+        await t.ensureVisible(review);
+        await t.tap(review);
+        await t.pumpAndSettle();
+        expect(find.text('Phiếu thực tế tô đáp án nào?'), findsOneWidget);
+        await t.tap(find.widgetWithText(OutlinedButton, 'D'));
+        await t.pumpAndSettle();
+        expect(find.text('Câu 2 - Chọn D'), findsOneWidget);
+        expect(
+          (t
+                      .widget<Image>(
+                        find.byKey(const ValueKey('answer-thumbnail-1')),
+                      )
+                      .image
+                  as MemoryImage)
+              .bytes,
+          same(second),
+        );
+        expect(r.data.papers, isEmpty);
+        expect(t.takeException(), isNull);
+      },
+    );
+  }
 }

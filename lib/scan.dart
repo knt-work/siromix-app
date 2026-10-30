@@ -780,22 +780,80 @@ class _ScannedResultState extends State<ScannedResult> {
         color: background,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        title: Text(
-          'Câu ${index + 1} - $chosen',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final title = Text(
+              'Câu ${index + 1} - $chosen',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            );
+            final thumbnail = Container(
+              width: 96,
+              height: 40,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: foreground.withValues(alpha: .22)),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Image.memory(
+                widget.read.answerCrops[index],
+                key: ValueKey('answer-thumbnail-$index'),
+                semanticLabel: 'Ảnh đáp án câu ${index + 1}',
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+            );
+            final subtitle = Text(
+              'Đáp án đúng: ${key.answers[index]} · $status',
+              style: TextStyle(color: foreground, fontSize: 12),
+            );
+            final reviewButton = paperNumber == null
+                ? TextButton(
+                    onPressed: confirming ? null : () => review(index),
+                    child: Text(pending ? 'Kiểm tra' : 'Xem lại'),
+                  )
+                : null;
+            final compact =
+                constraints.maxWidth < 290 ||
+                MediaQuery.textScalerOf(context).scale(14) > 18;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (compact) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [title, thumbnail],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(child: subtitle),
+                      ?reviewButton,
+                    ],
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(child: title),
+                      const SizedBox(width: 8),
+                      thumbnail,
+                      if (reviewButton != null) ...[
+                        const SizedBox(width: 4),
+                        reviewButton,
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  subtitle,
+                ],
+              ],
+            );
+          },
         ),
-        subtitle: Text(
-          'Đáp án đúng: ${key.answers[index]} · $status',
-          style: TextStyle(color: foreground, fontSize: 12),
-        ),
-        trailing: paperNumber == null
-            ? TextButton(
-                onPressed: confirming ? null : () => review(index),
-                child: Text(pending ? 'Kiểm tra' : 'Xem lại'),
-              )
-            : null,
       ),
     );
   }

@@ -9,6 +9,7 @@ SiroMix **1.0.0** is an offline, Android-first Flutter app for teachers to manag
 - Full-sheet scanning reads the six-digit candidate number and three-digit code. Answer-region-only scanning uses the preselected key and records the candidate as unknown.
 - Compact 40-question sheets support full-frame scanning only, read the three-digit exam code and record the candidate as unknown. Configure 1–40 active questions; marks after that count never affect scores or pending review.
 - Tap-to-capture, torch and live framing guidance. Ambiguous marks require teacher review; blank/multiple responses score zero.
+- Inline response-photo thumbnails in grading review help teachers verify the detected choices; enlarged manual review remains available.
 - Confirmed grading history with persistent per-subject numbering and immutable answer-key snapshots.
 - Confirmed exam/grade/subject cascade deletion, plus individual/batch result deletion. Result deletion does not reuse issued paper numbers.
 - Local teacher profile, searchable offline province/ward selectors and JSON backup/restore.
@@ -31,7 +32,7 @@ For a universal phone APK containing ARM64, ARMv7 and x86_64:
 powershell -ExecutionPolicy Bypass -File .\scripts\build-phone.ps1
 ```
 
-The script writes `dist/SiroMix-build-19-universal.apk`. Version is `1.0.0+19`: the user-visible version is 1.0.0, while Android build code 19 remains greater than earlier development builds. APKs, SDK caches, local Android configuration and signing keys are excluded from Git. The existing development signing configuration is retained; store publishing is a separate milestone.
+The script writes `dist/SiroMix-build-20-universal.apk`. Version is `1.0.0+20`: the user-visible version is 1.0.0, while Android build code 20 remains greater than earlier development builds. APKs, SDK caches, local Android configuration and signing keys are excluded from Git. The existing development signing configuration is retained; store publishing is a separate milestone.
 
 ## Scope and limitations
 

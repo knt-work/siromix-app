@@ -1,0 +1,302 @@
+<div id="grade-preview" class="viz-dotted-background" data-shell="launcher">
+  <div class="gp-phone" aria-label="Giao diện ứng dụng SiroMix">
+    <div class="gp-status"><span>9:41</span><span>▰ ▰ ▰</span></div>
+    <section class="sm-launcher" aria-label="Trang chủ SiroMix">
+      <header class="sm-header"><span class="sm-logo"><i data-lucide="shapes" aria-hidden="true"></i></span><h1>SiroMix<span class="sm-brand-dot"></span></h1><span class="sm-offline"><i data-lucide="cloud-off" aria-hidden="true"></i>Offline</span></header>
+      <div class="sm-banner" aria-hidden="true">
+        <span class="sm-banner-label">SiroMix</span>
+        <div class="sm-art"><div class="sm-sheet sm-sheet-back"></div><div class="sm-sheet"><i data-lucide="list-checks"></i><span></span><span></span><div class="sm-art-bubbles"><b></b><b></b><b></b><b></b></div><span></span></div><span class="sm-art-check"><i data-lucide="check"></i></span></div>
+        <span class="sm-brand-symbol"><i data-lucide="shapes"></i></span>
+      </div>
+      <div class="sm-launcher-content">
+        <h2>Chức năng</h2>
+        <div class="sm-tools" aria-label="Danh sách chức năng">
+          <button class="sm-tool cursor-interaction" type="button" data-open-tool="grading"><span class="sm-tool-icon"><i data-lucide="scan-line" aria-hidden="true"></i></span><span class="sm-tool-name">Chấm bài trắc nghiệm</span><i class="sm-chevron" data-lucide="chevron-right" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    </section>
+    <div class="sm-module-back"><button class="cursor-interaction" type="button" data-launcher-back><i data-lucide="arrow-left" aria-hidden="true"></i>Trang chủ</button><span>Chấm bài trắc nghiệm</span></div>
+    <header class="gp-head"><button class="gp-back" aria-label="Quay lại"><i data-lucide="arrow-left"></i></button><span class="gp-brand"><i data-lucide="scan-line"></i> SiroMix<span class="gp-dot"></span></span><span class="gp-offline"><i data-lucide="cloud-off"></i> Offline</span></header>
+    <main class="gp-main" aria-live="polite"></main>
+    <nav class="gp-nav" aria-label="Điều hướng chính"><button data-nav="home"><i data-lucide="layers"></i><span>Kì thi</span></button><button data-nav="scan"><i data-lucide="scan-line"></i><span>Quét bài</span></button><button data-nav="history"><i data-lucide="clipboard-check"></i><span>Kết quả</span></button></nav>
+    <div class="gp-homebar"></div>
+  </div>
+</div>
+<style>
+#grade-preview{padding:24px 12px;display:flex;justify-content:center;color-scheme:light}
+#grade-preview .gp-phone{--gp-bg:#f5f7f8;--gp-card:#ffffff;--gp-ink:#182f39;--gp-muted:#607780;--gp-line:#e1e9ec;--gp-accent:#087f78;--gp-soft:#e2f3ee;--gp-good:#086d60;--gp-warn:#fff4dc;--gp-warnink:#875710;width:100%;max-width:414px;background:var(--gp-bg);color:var(--gp-ink);border:1px solid var(--gp-line);border-radius:32px;overflow:hidden;font-family:Inter,"Segoe UI",sans-serif;box-shadow:0 18px 60px #00000014;font-size:14px;line-height:1.5}
+#grade-preview *{box-sizing:border-box}
+#grade-preview button,#grade-preview input,#grade-preview select{font:inherit}
+#grade-preview button{cursor:pointer}
+#grade-preview button:focus-visible,#grade-preview input:focus-visible,#grade-preview select:focus-visible{outline:3px solid #36afa5;outline-offset:3px}
+#grade-preview .gp-status{padding:15px 25px 5px;display:flex;justify-content:space-between;font-size:12px;font-weight:600}
+#grade-preview .gp-head{display:flex;align-items:center;gap:10px;padding:14px 20px 18px}
+#grade-preview .gp-brand{display:flex;gap:8px;align-items:center;font-size:18px;font-weight:700;letter-spacing:-.5px}
+#grade-preview svg{width:20px;height:20px;flex-shrink:0}
+#grade-preview .gp-brand>svg{color:var(--gp-accent);width:23px;height:23px}
+#grade-preview .gp-dot{height:6px;width:6px;background:#22ac8d;border-radius:50%;margin-left:1px}
+#grade-preview .gp-offline{margin-left:auto;font-size:11px;color:var(--gp-muted);display:flex;align-items:center;gap:4px}
+#grade-preview .gp-offline svg{width:13px;height:13px}
+#grade-preview .gp-back{background:none;border:0;color:var(--gp-ink);padding:6px;margin-left:-8px;display:flex}
+#grade-preview .gp-main{padding:4px 22px 26px;min-height:590px}
+#grade-preview .gp-eyebrow{font-size:11px;letter-spacing:1.5px;color:var(--gp-muted);font-weight:600;text-transform:uppercase;margin:2px 0 8px}
+#grade-preview h1{font-size:28px;line-height:1.2;letter-spacing:-1px;font-weight:700;margin:0 0 9px}
+#grade-preview h2{font-size:16px;font-weight:650;margin:0}
+#grade-preview p{margin:0;color:var(--gp-muted)}
+#grade-preview .gp-small{font-size:12px}
+#grade-preview .gp-year{display:flex;align-items:center;justify-content:space-between;background:var(--gp-card);border:1px solid var(--gp-line);padding:13px 15px;border-radius:14px;margin:22px 0}
+#grade-preview .gp-year label{color:var(--gp-muted);font-size:12px;display:flex;gap:8px;align-items:center}
+#grade-preview select{max-width:180px;background:var(--gp-card);border:0;color:var(--gp-ink);font-weight:600;padding:4px}
+#grade-preview .gp-section{display:flex;align-items:center;justify-content:space-between;margin:24px 0 12px}
+#grade-preview .gp-section span{font-size:12px;color:var(--gp-muted)}
+#grade-preview .gp-exam{width:100%;text-align:left;border:1px solid var(--gp-line);background:var(--gp-card);border-radius:18px;padding:18px;margin:0 0 12px;color:var(--gp-ink);display:block}
+#grade-preview .gp-exam:first-of-type{border-color:color-mix(in srgb,var(--gp-accent) 35%,var(--gp-line))}
+#grade-preview .gp-row{display:flex;align-items:center;gap:12px}
+#grade-preview .gp-between{justify-content:space-between}
+#grade-preview .gp-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--gp-soft);color:var(--gp-good);flex-shrink:0}
+#grade-preview .gp-tag{font-size:11px;background:var(--gp-soft);color:var(--gp-good);padding:4px 8px;border-radius:6px;white-space:nowrap}
+#grade-preview .gp-exam h2{margin:15px 0 6px;font-size:18px}
+#grade-preview .gp-foot{border-top:1px solid var(--gp-line);margin-top:16px;padding-top:12px;display:flex;justify-content:space-between;color:var(--gp-muted);font-size:12px}
+#grade-preview .gp-foot svg{width:16px;height:16px}
+#grade-preview .gp-primary{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:13px;background:var(--gp-accent);color:#fff;padding:14px;font-weight:600;margin-top:18px;min-height:48px}
+#grade-preview .gp-secondary{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1px solid var(--gp-line);border-radius:13px;background:var(--gp-card);color:var(--gp-ink);padding:12px;font-weight:500;margin-top:12px}
+#grade-preview .gp-nav{border-top:1px solid var(--gp-line);background:var(--gp-card);display:flex;justify-content:space-around;padding:12px 10px 4px}
+#grade-preview .gp-nav button{background:none;border:0;color:var(--gp-muted);display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 18px;font-size:11px;min-height:48px}
+#grade-preview .gp-nav button[aria-current="page"]{color:var(--gp-good);font-weight:650}
+#grade-preview .gp-homebar{width:100px;height:4px;border-radius:4px;background:var(--gp-ink);margin:12px auto 9px;opacity:.8}
+#grade-preview .gp-crumb{font-size:11px;color:var(--gp-muted);margin-bottom:14px;overflow-wrap:anywhere}
+#grade-preview .gp-subject{display:flex;align-items:center;gap:12px;width:100%;padding:17px 14px;background:var(--gp-card);border:1px solid var(--gp-line);border-radius:15px;color:var(--gp-ink);text-align:left;margin-bottom:10px}
+#grade-preview .gp-subject strong{font-size:16px;display:block;margin-bottom:3px}
+#grade-preview .gp-subject small{font-size:12px;color:var(--gp-muted)}
+#grade-preview .gp-subject>svg{margin-left:auto;width:17px;color:var(--gp-muted)}
+#grade-preview .gp-info{background:var(--gp-soft);color:var(--gp-good);border-radius:14px;padding:14px 16px;display:flex;gap:10px;align-items:center;margin:20px 0;font-size:12px}
+#grade-preview .gp-codes{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+#grade-preview .gp-code{text-align:left;color:var(--gp-ink);background:var(--gp-card);border:1px solid var(--gp-line);border-radius:15px;padding:15px}
+#grade-preview .gp-code strong{display:block;font-size:25px;letter-spacing:1px;margin:6px 0 10px}
+#grade-preview .gp-code small{color:var(--gp-muted);font-size:11px}
+#grade-preview .gp-code .gp-tag{display:inline-block}
+#grade-preview .gp-form{background:var(--gp-card);border:1px solid var(--gp-line);border-radius:16px;padding:16px;margin-top:18px}
+#grade-preview label.gp-label{font-size:12px;color:var(--gp-muted);display:block;margin:12px 0 6px}
+#grade-preview input{width:100%;padding:11px 12px;border:1px solid var(--gp-line);border-radius:9px;background:var(--gp-bg);color:var(--gp-ink);min-width:0}
+#grade-preview .gp-fieldrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#grade-preview .gp-answers{margin-top:14px}
+#grade-preview .gp-answer{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--gp-line);padding:9px 0}
+#grade-preview .gp-answer>span{width:45px;color:var(--gp-muted);font-size:12px}
+#grade-preview .gp-answer button{width:40px;height:36px;border:1px solid var(--gp-line);border-radius:9px;background:var(--gp-card);color:var(--gp-muted)}
+#grade-preview .gp-answer button[aria-pressed="true"]{background:var(--gp-accent);color:#fff;border-color:var(--gp-accent)}
+#grade-preview .gp-answer small{margin-left:auto;font-size:11px;color:var(--gp-muted)}
+#grade-preview .gp-pages{display:flex;gap:7px;margin:16px 0 8px}
+#grade-preview .gp-pages button{flex:1;padding:7px 0;border:1px solid var(--gp-line);border-radius:8px;background:var(--gp-card);color:var(--gp-muted);font-size:12px}
+#grade-preview .gp-pages button.active{background:var(--gp-soft);color:var(--gp-good);border-color:var(--gp-good)}
+#grade-preview .gp-camera{margin-top:20px;background:#dbe3e3;padding:22px;border-radius:20px;position:relative}
+#grade-preview .gp-paper{background:#fff;color:#252d2e;border:3px solid #1c8d7e;border-radius:3px;padding:18px 13px;max-width:225px;margin:auto;transform:rotate(-3deg);box-shadow:0 6px 15px #0002}
+#grade-preview .gp-paper strong{font-size:10px;display:block;text-align:center}
+#grade-preview .gp-marks{display:flex;justify-content:space-between;font-size:12px;margin:4px 0 10px}
+#grade-preview .gp-bubbles{font-size:12px;line-height:1.9;letter-spacing:3px}
+#grade-preview .gp-camera-tag{text-align:center;background:var(--gp-card);color:var(--gp-good);border-radius:20px;padding:7px;margin:20px auto 0;width:fit-content;font-size:11px}
+#grade-preview .gp-score{text-align:center;padding:24px 14px;background:var(--gp-soft);border-radius:20px;margin:20px 0;color:var(--gp-good)}
+#grade-preview .gp-score strong{display:block;font-size:52px;letter-spacing:-2px;font-weight:700}
+#grade-preview .gp-score small{font-size:14px}
+#grade-preview .gp-metrics{display:flex;justify-content:space-around;text-align:center;margin:18px 0}
+#grade-preview .gp-metrics strong{font-size:20px;display:block}
+#grade-preview .gp-metrics span{font-size:11px;color:var(--gp-muted)}
+#grade-preview .gp-notice{padding:14px;background:var(--gp-warn);color:var(--gp-warnink);border-radius:12px;font-size:12px;margin:15px 0}
+#grade-preview .gp-notice p{color:inherit;margin-top:5px}
+#grade-preview .gp-error{color:var(--gp-warnink);font-size:12px;margin-top:10px}
+@media(max-width:370px){#grade-preview{padding:8px 0}#grade-preview .gp-main{padding:4px 16px 22px}#grade-preview .gp-answer{gap:6px}#grade-preview .gp-answer button{width:34px}#grade-preview .gp-head{padding-left:16px;padding-right:16px}}
+#grade-preview .gp-answer-head{display:grid;grid-template-columns:30px 1fr 68px;gap:8px;font-size:11px;color:var(--gp-muted);margin-top:18px}
+#grade-preview .gp-answer{display:grid;grid-template-columns:30px 1fr 68px;gap:8px}
+#grade-preview .gp-answer>span{width:auto}
+#grade-preview .gp-options{display:flex;gap:5px}
+#grade-preview .gp-options button{width:auto;flex:1;min-width:0;height:39px;padding:0}
+#grade-preview .gp-answer input{padding:8px 5px;font-size:14px;text-align:center;background:var(--gp-card)}
+#grade-preview .gp-answers{margin-top:0}
+#grade-preview .gp-code strong{overflow-wrap:anywhere}
+#grade-preview .gp-tag svg{width:12px;height:12px;vertical-align:middle}
+#grade-preview .gp-crop{background:#fff;border:1px solid var(--gp-line);border-radius:16px;display:flex;align-items:center;justify-content:space-around;padding:30px 15px;margin:24px 0;color:#243940}
+#grade-preview .gp-crop>div{display:flex;flex-direction:column;gap:12px;align-items:center}
+#grade-preview .gp-bubble{width:31px;height:31px;border:1px solid #809097;border-radius:50%;background:rgba(35,43,48,var(--shade));box-shadow:inset 0 0 7px 2px #fff8}
+#grade-preview .gp-review-options{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#grade-preview .gp-review-options button{border:1px solid var(--gp-line);border-radius:12px;padding:15px;background:var(--gp-card);color:var(--gp-ink);font-size:18px;font-weight:600}
+#grade-preview .gp-metrics{gap:8px}
+#grade-preview .gp-metrics>div{flex:1}
+@media(pointer:coarse){#grade-preview .gp-options button{min-height:44px}#grade-preview input{font-size:16px}}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('grade-preview'), main=root.querySelector('.gp-main');
+const defaults={version:2,screen:'home',year:'2026 – 2027',exam:'Giữa học kì I',grade:'6',subject:'Toán',code:'132',page:0,db:{},catalog:{},review:{},confirmed:false};
+let s={...defaults};
+const old=window.openai?.widgetState?.privateContent;
+if(old?.version===2)s={...defaults,...old};
+const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon=n=>`<i data-lucide="${n}" aria-hidden="true"></i>`;
+const fmt=n=>Number(n).toLocaleString('vi-VN',{maximumFractionDigits:2,minimumFractionDigits:2});
+const ctx=()=>JSON.stringify([s.year,s.exam,s.grade,s.subject]);
+function names(type){const key=JSON.stringify(type==='exam'?[type,s.year]:type==='grade'?[type,s.year,s.exam]:[type,s.year,s.exam,s.grade]);return s.catalog[key]||=(type==='exam'?['Giữa học kì I','Cuối học kì I']:type==='grade'?['6','7','8','9']:['Toán','Vật lí','Tiếng Anh']).slice();}
+function bank(){return s.db[ctx()]||=(Object.fromEntries(['132','246','357','480'].map((c,j)=>[c,{count:30,common:0.25,points:Array(30).fill(0.25),answers:Array.from({length:30},(_,i)=>j===3?'':'ABCD'[(i+j)%4]),saved:j!==3}])));}
+function paper(){const b=bank();if(!b[s.code])s.code=Object.keys(b)[0];return b[s.code];}
+function total(){const p=paper();return p.points.slice(0,p.count).reduce((a,b)=>a+b,0);}
+const crumbs=()=>`<div class="gp-crumb">${esc(s.year)} / ${esc(s.exam)}${!['home','grades','name'].includes(s.screen)?' / Khối '+esc(s.grade):''}${['codes','edit','add','scan','result','review'].includes(s.screen)?' / '+esc(s.subject):''}</div>`;
+const btn=(text,action,ico='plus',secondary=false)=>`<button type="button" class="${secondary?'gp-secondary':'gp-primary'}" data-action="${action}">${icon(ico)}${text}</button>`;
+function persist(){window.openai?.setWidgetState?.({modelContent:{namHoc:s.year,kiThi:s.exam,khoi:s.grade,monThi:s.subject,maDe:s.code,manHinh:s.screen},privateContent:s})?.catch(()=>{});}
+function go(screen){s.screen=screen;render();persist();}
+function stats(){const p=paper();let points=0,correct=0,wrong=0,blank=0,multi=0,pending=0;for(let i=0;i<p.count;i++){let n=i+1;if(n===7){blank++;continue;}if(n===12){multi++;continue;}if(n===17||n===23){const r=s.review[n];if(!r){pending++;continue;}if(r===p.answers[i]){correct++;points+=p.points[i];}else if(r==='blank')blank++;else wrong++;continue;}if(n%6===0){wrong++;continue;}correct++;points+=p.points[i];}return {points,correct,wrong,blank,multi,pending};}
+function render(){
+root.querySelector('.gp-back').style.display=s.screen==='home'?'none':'flex';
+root.querySelectorAll('[data-nav]').forEach(b=>b.setAttribute('aria-current',(b.dataset.nav===s.screen||(b.dataset.nav==='home'&&['grades','subjects','codes','edit','add','name'].includes(s.screen))||(b.dataset.nav==='scan'&&['result','review'].includes(s.screen)))?'page':'false'));
+let h='';
+if(s.screen==='home')h=`<h1>Chấm bài trắc nghiệm</h1><div class="gp-year"><label for="gp-year">${icon('calendar-days')}Năm học</label><select id="gp-year">${['2026 – 2027','2025 – 2026'].map(y=>`<option${s.year===y?' selected':''}>${y}</option>`).join('')}</select></div><div class="gp-section"><h2>Kì thi của bạn</h2><span>${names('exam').length} kì thi</span></div>${names('exam').map(e=>`<button class="gp-exam" data-exam="${esc(e)}"><div class="gp-row gp-between"><span class="gp-icon">${icon('files')}</span><span class="gp-tag">Bộ đề</span></div><h2>${esc(e)}</h2><p class="gp-small">Năm học ${esc(s.year)}</p><div class="gp-foot"><span>Quản lý theo khối → môn → mã đề</span>${icon('arrow-up-right')}</div></button>`).join('')}${btn('Tạo kì thi','name-exam','plus',true)}`;
+if(s.screen==='grades')h=crumbs()+`<div class="gp-eyebrow">Kì thi</div><h1>${esc(s.exam)}</h1><p>Chọn khối để mở bộ đề tương ứng.</p><div class="gp-section"><h2>Khối học</h2><span>${names('grade').length} khối</span></div><div class="gp-codes">${names('grade').map(g=>`<button class="gp-code" data-grade="${esc(g)}"><small>KHỐI</small><strong>${esc(g)}</strong><span class="gp-tag">Chọn môn thi ${icon('arrow-right')}</span></button>`).join('')}</div>${btn('Thêm khối','name-grade','plus',true)}`;
+if(s.screen==='subjects')h=crumbs()+`<div class="gp-eyebrow">Khối ${esc(s.grade)}</div><h1>Môn thi</h1><p>Đáp án được quản lý riêng theo từng khối.</p><div class="gp-section"><h2>Chọn môn</h2><span>${names('subject').length} môn</span></div>${names('subject').map((m,i)=>`<button class="gp-subject" data-subject="${esc(m)}"><span class="gp-icon">${icon(['calculator','atom','languages'][i%3])}</span><span><strong>${esc(m)}</strong><small>Bộ mã đề · Phiếu ABCD</small></span>${icon('chevron-right')}</button>`).join('')}${btn('Thêm môn thi','name-subject','plus',true)}`;
+if(s.screen==='codes'){const b=bank();h=crumbs()+`<div class="gp-eyebrow">Khối ${esc(s.grade)} · Bộ đề</div><h1>${esc(s.subject)}</h1><p>Chọn mã để nhập đáp án và điểm mỗi câu.</p><div class="gp-info">${icon('file-check-2')}<span>Phiếu ABCD – tối đa 30 câu<br>Chấm trên máy · Không cần Internet</span></div><div class="gp-section"><h2>Mã đề</h2><span>${Object.keys(b).length} đề</span></div><div class="gp-codes">${Object.entries(b).map(([c,p])=>`<button class="gp-code" data-code="${esc(c)}"><small>MÃ ĐỀ</small><strong>${esc(c)}</strong><span class="gp-tag">${p.answers.slice(0,p.count).every(Boolean)?'Đủ đáp án':'Chưa đủ đáp án'}</span><p class="gp-small" style="margin-top:9px">${p.count} câu · ${fmt(p.points.slice(0,p.count).reduce((a,v)=>a+v,0))} điểm</p></button>`).join('')}</div>${btn('Thêm mã đề','add','plus',true)}${btn('Quét phiếu chấm bài','scan','scan-line')}`;}
+if(s.screen==='add')h=crumbs()+`<div class="gp-eyebrow">Mã đề mới</div><h1>Thêm mã đề</h1><p>Nhập mã tùy ý, không trùng trong môn này.</p><form id="gp-add" class="gp-form"><label class="gp-label" for="gp-new-code">Mã đề</label><input id="gp-new-code" required maxlength="20" placeholder="Ví dụ: 132"><div class="gp-info">${icon('files')}Phiếu ABCD – 30 câu</div><div class="gp-notice">Phiếu hiện tại đọc tự động mã 3 chữ số. Với mã khác, giáo viên chọn mã thủ công khi quét.</div><div id="gp-error" class="gp-error" role="alert"></div><button class="gp-primary">Tạo bộ đáp án ${icon('arrow-right')}</button></form>`;
+if(s.screen==='edit'){
+const p=paper(),start=s.page*10,n=Math.min(10,p.count-start),filled=p.answers.slice(0,p.count).filter(Boolean).length;
+h=crumbs()+`<div class="gp-eyebrow">Đáp án chuẩn · Khối ${esc(s.grade)}</div><h1>Mã đề ${esc(s.code)}</h1><div class="gp-fieldrow"><div><label class="gp-label" for="gp-count">Số câu · tối đa 30</label><input id="gp-count" value="${p.count}" type="number" min="1" max="30" step="1"></div><div><label class="gp-label" for="gp-common">Điểm chung mỗi câu</label><input id="gp-common" value="${p.common}" type="number" min="0" step="any"></div></div>${btn('Áp dụng điểm chung cho mọi câu','apply-points','copy',true)}<div class="gp-info">${icon('sigma')}<span><strong>Tổng điểm: <span id="gp-sum">${fmt(total())}</span></strong><br>Điểm tự cộng từ từng câu, không chia thang điểm.</span></div><div class="gp-section"><h2>Đáp án & điểm</h2><span>${filled}/${p.count} câu đã nhập</span></div><div class="gp-pages">${Array.from({length:Math.ceil(p.count/10)},(_,j)=>`<button data-page="${j}" class="${s.page===j?'active':''}">${j*10+1}–${Math.min(p.count,j*10+10)}</button>`).join('')}</div><div class="gp-answer-head"><span>Câu</span><span>Đáp án đúng</span><span>Điểm</span></div><div class="gp-answers">${Array.from({length:n},(_,j)=>{const i=start+j;return `<div class="gp-answer"><span>${i+1}</span><div class="gp-options">${[...'ABCD'].map(a=>`<button data-answer="${i}" data-value="${a}" aria-label="Câu ${i+1}, đáp án ${a}" aria-pressed="${p.answers[i]===a}">${a}</button>`).join('')}</div><input data-point="${i}" aria-label="Điểm câu ${i+1}" value="${p.points[i]}" type="number" min="0" step="any"></div>`;}).join('')}</div><div id="gp-error" role="alert" class="gp-error"></div>${btn(p.saved?'Đã lưu cấu hình đề':'Lưu cấu hình đề','save','check')}${btn('Quét với mã đề này','scan','scan-line',true)}`;
+}
+if(s.screen==='scan')h=crumbs()+`<div class="gp-eyebrow">Chấm bài · Mô phỏng</div><h1>Đưa phiếu vào khung</h1><p>Đặt phiếu phẳng, đủ sáng và đủ mốc đen.</p><div class="gp-year"><label for="gp-scan-code">Mã đề đang chọn</label><select id="gp-scan-code">${Object.keys(bank()).map(c=>`<option${c===s.code?' selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="gp-camera"><div class="gp-paper"><div class="gp-marks">■ <span>■</span> ■</div><strong>PHẦN TRẢ LỜI TRẮC NGHIỆM</strong><div class="gp-marks" style="margin-top:14px">■ <span>SBD &nbsp; MÃ ĐỀ</span> ■</div><div class="gp-bubbles">${Array.from({length:9},(_,i)=>`${i+1} ${['● ○ ○ ○','○ ● ○ ○','○ ○ ● ○','○ ○ ○ ●'][i%4]}`).join('<br>')}</div><div class="gp-marks">■ <span>■</span> ■</div></div><div class="gp-camera-tag">Phiếu ABCD · Camera minh họa</div></div><div id="gp-error" class="gp-error" role="alert"></div>${btn('Thử chấm phiếu minh họa','simulate','camera')}<p class="gp-small" style="text-align:center;margin-top:12px">Chưa kết nối camera hay bộ nhận diện thật.</p>`;
+if(s.screen==='result'){
+const r=stats();h=crumbs()+`<div class="gp-eyebrow">Kết quả minh họa</div><h1>${s.confirmed?'Đã xác nhận điểm':'Kiểm tra bài chấm'}</h1><p>SBD 001286 · Mã đề ${esc(s.code)}</p><div class="gp-score"><small>${r.pending?'Điểm tạm tính':'Tổng điểm'}</small><strong>${fmt(r.points)}<small> / ${fmt(total())}</small></strong><span>${r.correct} / ${paper().count} câu đúng</span></div><div class="gp-metrics"><div><strong>${r.correct}</strong><span>Đúng</span></div><div><strong>${r.wrong}</strong><span>Sai</span></div><div><strong>${r.blank+r.multi}</strong><span>Không hợp lệ / trống</span></div><div><strong>${r.pending}</strong><span>Cần kiểm tra</span></div></div>${r.pending?`<div class="gp-notice"><strong>${r.pending} câu cần giáo viên kiểm tra</strong><p>Tô mờ hoặc tẩy chưa sạch. Xử lý từng câu trước khi xác nhận điểm.</p></div>${btn('Kiểm tra ô không rõ','review','eye')}`:`<div class="gp-info">${icon('check')}Đã xử lý toàn bộ câu cần kiểm tra.</div>${!s.confirmed?btn('Xác nhận điểm','confirm','check'):''}`}<div class="gp-form"><h2>Quy tắc đã áp dụng</h2><p class="gp-small" style="margin-top:9px">Bỏ trống: 0 điểm<br>Tô nhiều đáp án: 0 điểm<br>Tô mờ / tẩy chưa sạch: kiểm tra thủ công</p></div>${btn('Quét bài tiếp theo','scan','scan-line',true)}<p class="gp-small" style="margin-top:14px;text-align:center">Lưu ảnh, lịch sử & xuất Excel · Sắp có</p>`;
+}
+if(s.screen==='review'){
+const n=[17,23].find(n=>n<=paper().count&&!s.review[n]);if(!n){s.screen='result';return render();}
+h=crumbs()+`<div class="gp-eyebrow">Kiểm tra thủ công · Minh họa</div><h1>Câu ${n}</h1><p>${n===17?'Ô tô mờ, chưa đủ chắc chắn.':'Có dấu tẩy chưa sạch giữa các ô.'}</p><div class="gp-crop" role="img" aria-label="Minh họa ô tô không rõ của câu ${n}"><span>${n}</span>${[...'ABCD'].map((a,i)=>`<div><small>${a}</small><span class="gp-bubble" style="--shade:${n===17?(i===0?'.28':'0'):(i===0?'.22':i===2?'.48':'0')}"></span></div>`).join('')}</div><div class="gp-notice">Vùng phóng to chỉ là minh họa. Khi triển khai, vị trí này sẽ hiển thị ảnh cắt từ phiếu thật.</div><div class="gp-section"><h2>Phiếu thực tế tô đáp án nào?</h2></div><div class="gp-review-options">${[...'ABCD'].map(a=>`<button data-review="${a}" data-n="${n}">${a}</button>`).join('')}</div>${btn('Xác nhận bỏ trống · 0 điểm','review-blank','circle',true)}${btn('Không hợp lệ / nhiều ô · 0 điểm','review-invalid','circle-slash',true)}<p class="gp-small" style="margin-top:15px">Đáp án chuẩn: ${esc(paper().answers[n-1])} · ${fmt(paper().points[n-1])} điểm</p>`;
+}
+if(s.screen==='history')h=`<div class="gp-eyebrow">Mở rộng sau</div><h1>Sổ chấm bài</h1><p>Kết quả hiện được xem ngay sau mỗi lượt quét.</p><div class="gp-info">${icon('clock-3')}Lịch sử và xuất dữ liệu · Sắp có</div>${['Lưu ảnh phiếu','Lịch sử bài chấm','Xuất bảng điểm Excel'].map(t=>`<div class="gp-subject"><span class="gp-icon">${icon('lock-keyhole')}</span><span><strong>${t}</strong><small>Chưa triển khai trong bản đầu</small></span></div>`).join('')}${btn('Quay về bộ đề','codes','layers',true)}`;
+if(s.screen==='name')h=crumbs()+`<h1>${{exam:'Tạo kì thi',grade:'Thêm khối',subject:'Thêm môn thi'}[s.nameType]}</h1><form class="gp-form" id="gp-name-form"><label class="gp-label" for="gp-name">${{exam:'Tên kì thi',grade:'Khối học',subject:'Tên môn thi'}[s.nameType]}</label><input id="gp-name" required maxlength="60" placeholder="${{exam:'Ví dụ: Kiểm tra tháng 11',grade:'Ví dụ: 10',subject:'Ví dụ: Hóa học'}[s.nameType]}"><div id="gp-error" class="gp-error" role="alert"></div><button class="gp-primary">Tạo ${icon('plus')}</button></form>`;
+main.innerHTML=h;
+if(globalThis.lucide)lucide.createIcons();
+}
+root.addEventListener('click',e=>{
+const b=e.target.closest('button');if(!b)return;
+if(b.classList.contains('gp-back'))return go(({grades:'home',subjects:'grades',codes:'subjects',edit:'codes',add:'codes',scan:'codes',result:'scan',review:'result',history:'home',name:s.nameType==='exam'?'home':s.nameType==='grade'?'grades':'subjects'})[s.screen]||'home');
+if(b.dataset.nav)return go(b.dataset.nav);
+if(b.dataset.exam){s.exam=b.dataset.exam;return go('grades');}
+if(b.dataset.grade){s.grade=b.dataset.grade;return go('subjects');}
+if(b.dataset.subject){s.subject=b.dataset.subject;return go('codes');}
+if(b.dataset.code){s.code=b.dataset.code;s.page=0;return go('edit');}
+if(b.dataset.page!==undefined){s.page=Number(b.dataset.page);render();return persist();}
+if(b.dataset.answer!==undefined){const p=paper();p.answers[Number(b.dataset.answer)]=b.dataset.value;p.saved=false;render();return persist();}
+if(b.dataset.review){s.review[b.dataset.n]=b.dataset.review;return go('review');}
+const a=b.dataset.action;
+if(a?.startsWith('name-')){s.nameType=a.slice(5);return go('name');}
+if(a==='scan'||a==='add'||a==='review')return go(a);
+if(a==='codes')return go('codes');
+if(a==='apply-points'){const p=paper();p.points.fill(p.common);p.saved=false;render();persist();}
+if(a==='save'){const p=paper();if(!p.answers.slice(0,p.count).every(Boolean)){main.querySelector('#gp-error').textContent='Cần chọn đáp án đúng cho tất cả các câu.';return;}p.saved=true;render();persist();}
+if(a==='simulate'){if(!paper().answers.slice(0,paper().count).every(Boolean)){main.querySelector('#gp-error').textContent='Mã đề chưa đủ đáp án. Quay lại bộ đề để nhập đầy đủ trước khi chấm.';return;}s.review={};s.confirmed=false;go('result');}
+if(a==='review-blank'||a==='review-invalid'){const n=[17,23].find(n=>n<=paper().count&&!s.review[n]);if(n)s.review[n]=a==='review-blank'?'blank':'invalid';go('review');}
+if(a==='confirm'&&!stats().pending){s.confirmed=true;go('result');}
+});
+root.addEventListener('change',e=>{
+const t=e.target;
+if(t.id==='gp-year'){s.year=t.value;go('home');}
+if(t.id==='gp-scan-code'){s.code=t.value;persist();}
+if(t.id==='gp-count'){let n=Number(t.value);if(!Number.isInteger(n)||n<1||n>30){t.value=paper().count;return;}const p=paper();p.count=n;p.saved=false;s.page=Math.min(s.page,Math.ceil(n/10)-1);render();persist();}
+if(t.id==='gp-common'){const n=Number(t.value);if(t.value===''||!Number.isFinite(n)||n<0){t.value=paper().common;return;}paper().common=n;persist();}
+if(t.dataset.point!==undefined){const n=Number(t.value);if(t.value===''||!Number.isFinite(n)||n<0){t.value=paper().points[t.dataset.point];return;}const p=paper();p.points[Number(t.dataset.point)]=n;p.saved=false;main.querySelector('#gp-sum').textContent=fmt(total());const save=main.querySelector('[data-action="save"]');save.innerHTML=icon('check')+'Lưu cấu hình đề';persist();}
+});
+root.addEventListener('submit',e=>{
+e.preventDefault();
+if(e.target.id==='gp-add'){const v=main.querySelector('#gp-new-code').value.trim();if(!v||Object.hasOwn(bank(),v)){main.querySelector('#gp-error').textContent='Nhập mã mới, không trùng mã đã có.';return;}Object.defineProperty(bank(),v,{value:{count:30,common:0.25,points:Array(30).fill(0.25),answers:Array(30).fill(''),saved:false},enumerable:true,writable:true,configurable:true});s.code=v;s.page=0;go('edit');}
+if(e.target.id==='gp-name-form'){const v=main.querySelector('#gp-name').value.trim();const a=names(s.nameType);if(!v||a.includes(v)){main.querySelector('#gp-error').textContent='Vui lòng nhập tên mới, không trùng.';return;}a.push(v);if(s.nameType==='exam'){s.exam=v;go('grades');}else if(s.nameType==='grade'){s.grade=v;go('subjects');}else{s.subject=v;go('codes');}}
+});
+window.addEventListener('openai:set_globals',e=>{const v=e.detail?.globals?.widgetState?.privateContent;if(v?.version===2){s={...defaults,...v};render();}});
+render();
+})();
+</script>
+<style>
+#grade-preview[data-shell="launcher"] .gp-head,#grade-preview[data-shell="launcher"] .gp-main,#grade-preview[data-shell="launcher"] .gp-nav,#grade-preview[data-shell="launcher"] .sm-module-back{display:none}
+#grade-preview[data-shell="grading"] .sm-launcher{display:none}
+#grade-preview .sm-launcher{min-height:625px}
+#grade-preview .sm-header{padding:26px 24px 30px;display:flex;gap:11px;align-items:center;background:#fff;border-bottom:1px solid #e7edee}
+#grade-preview .sm-logo{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;color:#fff;background:#087f78}
+#grade-preview .sm-logo svg{width:24px;height:24px}
+#grade-preview .sm-header h1{margin:0;display:flex;align-items:baseline;gap:3px;font-size:27px;letter-spacing:-.9px}
+#grade-preview .sm-brand-dot{height:6px;width:6px;background:#19a587;border-radius:50%}
+#grade-preview .sm-launcher-content{padding:27px 22px}
+#grade-preview .sm-launcher-content h2{font-size:14px;font-weight:600;color:#607780;margin:0 0 14px}
+#grade-preview .sm-tool{width:100%;display:flex;gap:15px;align-items:center;text-align:left;background:#fff;border:1px solid #e1e9ec;border-radius:18px;padding:20px 16px;color:#182f39;box-shadow:0 3px 10px #18383f04}
+#grade-preview .sm-tool:hover{border-color:#80bbb2;background:#fcfffe}
+#grade-preview .sm-tool:active{background:#e2f3ee}
+#grade-preview .sm-tool-icon{background:#e2f3ee;color:#087f78;border-radius:15px;display:grid;place-items:center;width:54px;height:54px;flex-shrink:0}
+#grade-preview .sm-tool-icon svg{height:27px;width:27px}
+#grade-preview .sm-tool-name{font-size:15px;font-weight:600;flex:1;overflow-wrap:anywhere}
+#grade-preview .sm-chevron{width:17px;color:#71878d}
+#grade-preview .sm-module-back{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 4px;gap:10px;font-size:11px;color:#607780}
+#grade-preview .sm-module-back button{display:flex;align-items:center;gap:5px;min-height:40px;border:0;padding:4px 0;background:none;color:#087f78;font-size:12px}
+#grade-preview .sm-module-back svg{height:16px;width:16px}
+#grade-preview[data-layout="icons"] .sm-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#grade-preview[data-layout="icons"] .sm-tool{flex-direction:column;align-items:flex-start;gap:16px;min-height:155px}
+#grade-preview[data-layout="icons"] .sm-chevron{display:none}
+#grade-preview[data-layout="icons"] .sm-tool-name{max-width:100%;flex:initial;line-height:1.5}
+@media(max-width:360px){#grade-preview .sm-launcher-content{padding:24px 16px}#grade-preview .sm-tool{gap:12px;padding:17px 13px}#grade-preview .sm-tool-icon{width:48px;height:48px}}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('grade-preview');
+const options={layout:'icons'};
+const saved=window.openai?.widgetState?.privateContent;
+if(saved?.homePreview===true){root.dataset.shell=saved.section==='grading'?'grading':'launcher';options.layout=saved.layout==='icons'?'icons':'list';}
+function applyLayout(){root.dataset.layout=options.layout;}
+function save(){window.openai?.setWidgetState?.({modelContent:{preview:'SiroMix home',section:root.dataset.shell,layout:options.layout},privateContent:{homePreview:true,section:root.dataset.shell,layout:options.layout}})?.catch(()=>{});}
+root.addEventListener('click',e=>{
+const b=e.target.closest('button');if(!b)return;
+if(b.hasAttribute('data-open-tool')){root.dataset.shell='grading';const home=root.querySelector('[data-nav="home"]');if(home)home.click();save();}
+if(b.hasAttribute('data-launcher-back')){root.dataset.shell='launcher';save();}
+});
+window.addEventListener('openai:set_globals',e=>{const v=e.detail?.globals?.widgetState?.privateContent;if(v?.homePreview===true){root.dataset.shell=v.section==='grading'?'grading':'launcher';options.layout=v.layout==='icons'?'icons':'list';applyLayout();}});
+applyLayout();
+if(globalThis.Tweak){const t=new Tweak({container:root.querySelector('.sm-launcher'),onChange:()=>{applyLayout();save();}});t.addSelect(options,'layout',{label:'Kiểu hiển thị chức năng',options:[{label:'Danh sách',value:'list'},{label:'Biểu tượng',value:'icons'}]});}
+if(globalThis.lucide)lucide.createIcons();
+})();
+</script>
+<style>
+#grade-preview[data-shell="launcher"] .gp-phone{background:#faf9f7;border-color:#eee8e1;box-shadow:0 22px 65px #6a31151c}
+#grade-preview[data-shell="launcher"] .gp-status{background:#fff;color:#252a30}
+#grade-preview .sm-launcher{min-height:610px;background:linear-gradient(#fff 0 160px,#faf9f7 160px)}
+#grade-preview .sm-header{padding:24px 23px 23px;border:0;gap:10px}
+#grade-preview .sm-header h1{font-size:23px;letter-spacing:-.7px;color:#252a30}
+#grade-preview .sm-logo{width:36px;height:36px;background:#fff0e6;color:#dd4e11;border-radius:12px}
+#grade-preview .sm-logo svg{width:21px;height:21px}
+#grade-preview .sm-brand-dot{background:#ee692c;width:5px;height:5px}
+#grade-preview .sm-offline{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:#75766f}
+#grade-preview .sm-offline svg{width:13px;height:13px}
+#grade-preview .sm-banner{height:176px;border-radius:22px;margin:0 22px;position:relative;background:linear-gradient(115deg,#e34b0a,#f77a32);box-shadow:0 12px 25px #d85a1424;overflow:hidden;color:#fff}
+#grade-preview .sm-banner:before{content:'';width:215px;height:215px;position:absolute;background:#ffffff14;border-radius:50%;right:-110px;top:-115px}
+#grade-preview .sm-banner:after{content:'';width:180px;height:180px;position:absolute;background:#ffffff13;border-radius:50%;left:-75px;bottom:-140px}
+#grade-preview .sm-banner-label{position:absolute;left:24px;top:25px;font-size:30px;font-weight:700;letter-spacing:-1px}
+#grade-preview .sm-brand-symbol{position:absolute;bottom:22px;left:24px;color:#ffcdaf}
+#grade-preview .sm-brand-symbol svg{width:26px;height:26px}
+#grade-preview .sm-art{position:absolute;width:120px;height:135px;right:19px;top:29px;transform:rotate(10deg)}
+#grade-preview .sm-sheet{position:absolute;left:20px;top:0;background:#fffaf5;width:79px;height:110px;border-radius:10px;box-shadow:0 6px 18px #7f2d1930;padding:13px;display:flex;flex-direction:column;gap:9px;color:#df591d;transform:rotate(-17deg)}
+#grade-preview .sm-sheet>svg{width:20px;height:20px;margin-bottom:1px}
+#grade-preview .sm-sheet>span{display:block;background:#e7dcd1;height:3px;border-radius:3px}
+#grade-preview .sm-sheet>span:nth-child(3){width:70%}
+#grade-preview .sm-sheet-back{background:#ffd5b8;transform:rotate(3deg);top:5px;left:29px}
+#grade-preview .sm-art-bubbles{display:flex;gap:5px}
+#grade-preview .sm-art-bubbles b{width:8px;height:8px;border:1px solid #eaa980;border-radius:50%}
+#grade-preview .sm-art-bubbles b:nth-child(2){background:#f26a2a;border-color:#f26a2a}
+#grade-preview .sm-art-check{position:absolute;bottom:12px;right:7px;background:#fff;color:#e75d20;border:5px solid #ffac78;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;box-shadow:0 5px 12px #8c3a2530}
+#grade-preview .sm-art-check svg{height:20px;width:20px}
+#grade-preview .sm-launcher-content{position:relative;margin:23px 22px;padding:21px 18px 26px;border-radius:21px;background:#fff;box-shadow:0 5px 24px #543c1a06;border:1px solid #f0ebe5;min-height:215px}
+#grade-preview .sm-launcher-content h2{font-size:15px;color:#2d3239;margin-bottom:21px;font-weight:650}
+#grade-preview .sm-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+#grade-preview .sm-tool{border:0;background:transparent;border-radius:13px;box-shadow:none;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:5px 0;min-height:112px}
+#grade-preview .sm-tool:hover{background:#fff8f1;border-color:transparent}
+#grade-preview .sm-tool-icon{width:58px;height:58px;border-radius:19px;background:linear-gradient(145deg,#fff1e5,#ffdec4);color:#df591b;box-shadow:inset 0 1px 0 #fff,0 5px 10px #e66a1610;position:relative}
+#grade-preview .sm-tool-icon:after{content:'';position:absolute;width:7px;height:7px;background:#e86629;border:2px solid #fff;border-radius:50%;right:0;top:0}
+#grade-preview .sm-tool-icon svg{width:27px;height:27px}
+#grade-preview .sm-tool-name{font-size:12px;color:#35363b;font-weight:500;line-height:1.5;max-width:100px;flex:initial}
+#grade-preview .sm-chevron{display:none}
+#grade-preview[data-layout="icons"] .sm-tools{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+#grade-preview[data-layout="icons"] .sm-tool{align-items:center;min-height:112px;gap:12px}
+#grade-preview[data-layout="icons"] .sm-tool-name{max-width:100px}
+#grade-preview[data-layout="list"] .sm-tools{display:block}
+#grade-preview[data-layout="list"] .sm-tool{flex-direction:row;align-items:center;text-align:left;gap:16px;min-height:76px;padding:8px 4px}
+#grade-preview[data-layout="list"] .sm-tool-name{font-size:14px;max-width:none}
+#grade-preview[data-layout="list"] .sm-chevron{display:block;margin-left:auto;color:#bc9681}
+#grade-preview[data-shell="launcher"] .gp-homebar{background:#282d31}
+@media(max-width:360px){#grade-preview .sm-banner{margin:0 16px;height:166px}#grade-preview .sm-banner-label{font-size:27px;left:19px}#grade-preview .sm-launcher-content{margin:22px 16px;padding:20px 16px}#grade-preview .sm-art{right:8px;transform:rotate(10deg) scale(.9)}#grade-preview .sm-header{padding:23px 18px}}
+</style>

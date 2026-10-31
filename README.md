@@ -32,7 +32,7 @@ For a universal phone APK containing ARM64, ARMv7 and x86_64:
 powershell -ExecutionPolicy Bypass -File .\scripts\build-phone.ps1
 ```
 
-The script writes `dist/SiroMix-build-20-universal.apk`. Version is `1.0.0+20`: the user-visible version is 1.0.0, while Android build code 20 remains greater than earlier development builds. APKs, SDK caches, local Android configuration and signing keys are excluded from Git. The existing development signing configuration is retained; store publishing is a separate milestone.
+The script writes `dist/SiroMix-build-21-universal.apk`. Version is `1.0.0+21`: the user-visible version is 1.0.0, while Android build code 21 remains greater than earlier development builds. APKs, SDK caches, local Android configuration and signing keys are excluded from Git. The existing development signing configuration is retained; store publishing is a separate milestone.
 
 ## Scope and limitations
 

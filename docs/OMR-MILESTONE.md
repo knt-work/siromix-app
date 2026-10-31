@@ -54,7 +54,7 @@ No physical Xiaomi camera has been accessed or tested by the agent. The user mus
 
 ## Phone test procedure
 
-1. Install `dist/SiroMix-build-20-universal.apk` over the previous build; do not uninstall or clear app data.
+1. Install `dist/SiroMix-build-21-universal.apk` over the previous build; do not uninstall or clear app data.
 2. Open the grading tool and create/select a key using **A4 – 10 câu trắc nghiệm và tự luận**. Configure 1–10 questions, their correct answers, and points. Save.
 3. Print page 1 of the original PDF. Ensure all four outer black markers are present. Fill the candidate number, exam code, and test answers.
 4. Select the key, open the camera, grant permission, and capture the flat, well-lit sheet with all four outer markers visible. Page 2 and the written-response areas are ignored.
@@ -73,3 +73,6 @@ Build 19 corrects compact alignment and bubble measurement on the first physical
 
 
 User acceptance, 30 October 2026: the user reported build 19 runs satisfactorily in real-device testing and requested pushing the source checkpoint. Earlier pending-phone-verification notes are historical; this does not imply broad device/photo accuracy certification. See SPEC.md section 32.
+
+
+Build 21 (31 October 2026) separates compact code-field fill evidence from preprinted numeral blur using both central and side-band samples. The user-labeled 209 source photo and the existing 132 photo are regression fixtures; answer handling and the ten-question reader are unchanged. See SPEC.md section 34.

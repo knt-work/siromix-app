@@ -17,11 +17,15 @@ void main() {
   final reference = File('assets/templates/abcd-40-compact-v1.png')
       .readAsBytesSync();
   Uint8List marked({
+    String code = '008',
     bool rotate = false,
     bool faint = false,
     bool multiple = false,
     bool faintCode = false,
     bool doubleCode = false,
+    bool blankCode = false,
+    bool blurredNumerals = false,
+    bool extraFaintEight = false,
   }) {
     var image = img.decodePng(reference)!;
     void dot(double x, double y, {bool weak = false}) => img.fillCircle(
@@ -41,12 +45,34 @@ void main() {
     if (multiple) {
       dot(CompactSheetGeometry.answerX(3)[0], CompactSheetGeometry.answerY(3));
     }
-    const code = '008';
-    for (var i = 0; i < 3; i++) {
+    if (!blankCode) {
+      for (var i = 0; i < 3; i++) {
+        dot(
+          CompactSheetGeometry.codeX[i],
+          CompactSheetGeometry.upperY[int.parse(code[i])],
+          weak: faintCode && i == 1,
+        );
+      }
+    }
+    if (blurredNumerals) {
+      for (final x in CompactSheetGeometry.codeX) {
+        for (final y in CompactSheetGeometry.upperY) {
+          img.fillRect(
+            image,
+            x1: (36.5 + x - 6).round(),
+            y1: (43 + y - 8).round(),
+            x2: (36.5 + x + 6).round(),
+            y2: (43 + y - 5).round(),
+            color: img.ColorRgb8(80, 80, 80),
+          );
+        }
+      }
+    }
+    if (extraFaintEight) {
       dot(
-        CompactSheetGeometry.codeX[i],
-        CompactSheetGeometry.upperY[int.parse(code[i])],
-        weak: faintCode && i == 1,
+        CompactSheetGeometry.codeX[2],
+        CompactSheetGeometry.upperY[8],
+        weak: true,
       );
     }
     if (doubleCode) {
@@ -374,4 +400,45 @@ void main() {
     expect(multiple.code[0].state, MarkState.multiple);
     expect(multiple.codeClear, false);
   });
+  test('compact code detector supports all ten printed numerals', () {
+    for (final code in ['012', '345', '678', '909']) {
+      final r = recognizeCompactSheet({
+        'photo': marked(code: code),
+        'reference': reference,
+      });
+      expect(r.codeText, code);
+      expect(r.codeClear, true);
+    }
+  });
+  test('printed numeral blur alone does not create selected code digits', () {
+    final r = recognizeCompactSheet({
+      'photo': marked(blankCode: true, blurredNumerals: true),
+      'reference': reference,
+    });
+    expect(r.code.every((v) => v.state == MarkState.blank), true);
+    expect(r.codeClear, false);
+  });
+  test(
+    'printed blur on unselected numbers is ignored for an otherwise clear code',
+    () {
+      final r = recognizeCompactSheet({
+        'photo': marked(code: '209', blurredNumerals: true),
+        'reference': reference,
+      });
+      expect(r.codeText, '209');
+      expect(r.codeClear, true);
+    },
+  );
+  test(
+    'a genuinely faint eight alongside a strong nine still requires review',
+    () {
+      final r = recognizeCompactSheet({
+        'photo': marked(code: '209', extraFaintEight: true),
+        'reference': reference,
+      });
+      expect(r.codeText, '20?');
+      expect(r.code[2].state, MarkState.uncertain);
+      expect(r.codeClear, false);
+    },
+  );
 }

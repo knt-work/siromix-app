@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:siromix/omr.dart';
 
 void main() {
+  final skipPrivate209 = !File('test/fixtures/compact-209-real.png')
+      .existsSync();
   test('real compact sheet reads code 132 and first eight responses', () {
     final r = recognizeCompactSheet({
       'photo': File('test/fixtures/compact-132-real.png').readAsBytesSync(),
@@ -60,4 +62,30 @@ void main() {
       true,
     );
   });
+  test('209 source photo ignores confirmed printed-digit blur and reads all active answers', () {
+    final r = recognizeCompactSheet({
+      'photo': File('test/fixtures/compact-209-real.png').readAsBytesSync(),
+      'reference': File('assets/templates/abcd-40-compact-v1.png')
+          .readAsBytesSync(),
+    });
+    expect(r.codeText, '209');
+    expect(r.codeClear, true);
+    expect(r.answers.take(8).map((a) => a.answer).join(), 'ACBBCAAD');
+    expect(r.answers.take(8).every((a) => a.state == MarkState.single), true);
+  }, skip: skipPrivate209);
+  test('209 printed-blur photo remains readable after rotation and JPEG compression', () {
+    final image = img.copyRotate(
+      img.decodePng(
+        File('test/fixtures/compact-209-real.png').readAsBytesSync(),
+      )!,
+      angle: 90,
+    );
+    final r = recognizeCompactSheet({
+      'photo': Uint8List.fromList(img.encodeJpg(image, quality: 88)),
+      'reference': File('assets/templates/abcd-40-compact-v1.png')
+          .readAsBytesSync(),
+    });
+    expect(r.codeText, '209');
+    expect(r.codeClear, true);
+  }, skip: skipPrivate209);
 }

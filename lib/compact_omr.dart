@@ -213,11 +213,7 @@ OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
   final source = _load(input['photo']!), reference = _load(input['reference']!);
   final aligned = _compactWarp(source, _compactAlignment(source));
   final baseline = _compactWarp(reference, _compactAlignment(reference));
-  ResponseMark read(
-    List<math.Point<double>> points,
-    List<String> labels, {
-    bool digit = false,
-  }) {
+  ResponseMark read(List<math.Point<double>> points, List<String> labels) {
     try {
       final differences = points
           .map(
@@ -226,16 +222,6 @@ OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
                 _compactDensity(baseline, p.x, p.y),
           )
           .toList();
-      if (digit) {
-        // A code column normally has nine unfilled circles. Estimate its
-        // shared print/paper noise from the lower values, capped below the
-        // faint-mark threshold; never select a digit just because it is darkest.
-        final ordered = List<double>.of(differences)..sort();
-        final noise = ordered[2].clamp(0.0, .04);
-        for (var i = 0; i < differences.length; i++) {
-          differences[i] -= noise;
-        }
-      }
       return _classify(differences, labels);
     } on OmrException {
       // A shadow on an unused question must not block grading active questions.
@@ -253,17 +239,7 @@ OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
       ['A', 'B', 'C', 'D'],
     ),
   );
-  final code = CompactSheetGeometry.codeX.map((x) {
-    final mark = read(
-      List.generate(10, (i) => math.Point(x, CompactSheetGeometry.upperY[i])),
-      List.generate(10, (i) => '$i'),
-      digit: true,
-    );
-    return DigitReading(
-      mark.state == MarkState.single ? mark.answer : '?',
-      mark.state,
-    );
-  }).toList();
+  final code = _readCompactCode(aligned, baseline);
   return OmrRead(
     answers: answers,
     candidate: const [],
@@ -418,3 +394,66 @@ _Gray _compactWarp(_Gray source, _CompactAlignment alignment) {
 // Measure paper outside the larger printed circles, not their dark outlines.
 double _compactDensity(_Gray g, double x, double y) =>
     _density(g, x, y, coreRadius: 11, backgroundInner: 20, backgroundOuter: 23);
+
+// Compact code bubbles contain printed digits. Require added ink in both the
+// core and the two side bands outside the numeral footprint. Printed numeral
+// blur alone may darken the core; a thicker circle alone may darken the sides.
+// Requiring both rejects either print artifact without picking the darkest digit.
+List<DigitReading> _readCompactCode(_Gray photo, _Gray baseline) {
+  List<double> normalize(List<double> values) {
+    final ordered = List<double>.of(values)..sort();
+    final noise = ordered[2].clamp(0.0, .04);
+    return values.map((v) => v - noise).toList();
+  }
+
+  return CompactSheetGeometry.codeX.map((x) {
+    try {
+      final core = normalize(
+        List.generate(10, (i) {
+          final y = CompactSheetGeometry.upperY[i];
+          return _compactDensity(photo, x, y) - _compactDensity(baseline, x, y);
+        }),
+      );
+      final sides = normalize(
+        List.generate(10, (i) {
+          final y = CompactSheetGeometry.upperY[i];
+          return _compactDigitSides(photo, x, y) -
+              _compactDigitSides(baseline, x, y);
+        }),
+      );
+      final mark = _classify(
+        List.generate(10, (i) => math.min(core[i], sides[i])),
+        List.generate(10, (i) => '$i'),
+      );
+      return DigitReading(
+        mark.state == MarkState.single ? mark.answer : '?',
+        mark.state,
+      );
+    } on OmrException {
+      return const DigitReading('?', MarkState.uncertain);
+    }
+  }).toList();
+}
+
+double _compactDigitSides(_Gray image, double x, double y) {
+  final paper = <double>[];
+  for (var dy = -23; dy <= 23; dy += 2) {
+    for (var dx = -23; dx <= 23; dx += 2) {
+      final radius = dx * dx + dy * dy;
+      if (radius >= 400 && radius <= 529) paper.add(image.at(x + dx, y + dy));
+    }
+  }
+  paper.sort();
+  final white = paper[(paper.length * .85).floor()];
+  if (white < 135) throw const OmrException('Ảnh quá tối. Vui lòng chụp lại.');
+  var sum = 0.0, count = 0;
+  for (var dy = -11; dy <= 11; dy++) {
+    for (var dx = -11; dx <= 11; dx++) {
+      // The central +/-8 pixel strip contains the printed number and blur.
+      if (dx.abs() <= 8 || dx * dx + dy * dy > 121) continue;
+      sum += (1 - image.at(x + dx, y + dy) / white).clamp(0, 1);
+      count++;
+    }
+  }
+  return sum / count;
+}

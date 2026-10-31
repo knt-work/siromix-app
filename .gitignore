@@ -49,3 +49,6 @@ app.*.map.json
 
 # Stable phone install packages (not emulator debug output)
 /dist/
+
+# Local user-supplied diagnostic photo; not authorized for publication.
+/test/fixtures/compact-209-real.png

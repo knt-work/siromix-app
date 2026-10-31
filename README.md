@@ -13,7 +13,7 @@ SiroMix **1.0.0** is an offline, Android-first Flutter app for teachers to manag
 - Confirmed grading history with persistent per-subject numbering and immutable answer-key snapshots.
 - Confirmed exam/grade/subject cascade deletion, plus individual/batch result deletion. Result deletion does not reuse issued paper numbers.
 - Local teacher profile, searchable offline province/ward selectors and JSON backup/restore.
-- Sunrise home wallpaper, personalized time-of-day greeting and compact colored function tiles.
+- Sunrise home wallpaper, personalized time-of-day greeting, smaller colorful tool tiles with shadows and accent-insensitive function search.
 
 ## Run and build
 
@@ -32,7 +32,7 @@ For a universal phone APK containing ARM64, ARMv7 and x86_64:
 powershell -ExecutionPolicy Bypass -File .\scripts\build-phone.ps1
 ```
 
-The script writes `dist/SiroMix-build-21-universal.apk`. Version is `1.0.0+21`: the user-visible version is 1.0.0, while Android build code 21 remains greater than earlier development builds. APKs, SDK caches, local Android configuration and signing keys are excluded from Git. The existing development signing configuration is retained; store publishing is a separate milestone.
+The script writes `dist/SiroMix-build-22-universal.apk`. Version is `1.0.0+22`: the user-visible version is 1.0.0, while Android build code 22 remains greater than earlier development builds. APKs, SDK caches, local Android configuration and signing keys are excluded from Git. The existing development signing configuration is retained; store publishing is a separate milestone.
 
 ## Scope and limitations
 

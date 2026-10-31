@@ -469,3 +469,21 @@ Use a code-field detector specific to the compact template. Require added ink re
 Keep existing single/multiple/uncertain thresholds and explicit teacher review. A genuinely faint second bubble alongside a strong choice must still block automatic code selection. Do not select a code from context or hardcode any known code. Blank/ambiguous fields stay unresolved. Limit the change to compact code-field reading: answer classification, scoring/count rules, ten-question scanning, camera geometry, data schema and photo retention remain unchanged. Keep build-20 inline thumbnails. Version is 1.0.0+21.
 
 The user-supplied 209 photo is a local-only diagnostic fixture excluded by .gitignore; it is not published to GitHub. Its two real-photo tests skip automatically when that file is absent. Synthetic print-artifact and faint/multiple-mark tests remain fully reproducible from tracked assets.
+
+
+## 35. Approved About-page copy and presentation (31 October 2026)
+
+Replace the short author-only About page with the approved Vietnamese introduction. Show the existing launcher artwork and SiroMix name first, followed by the orange opening line: “Thêm thời gian cho việc dạy, bớt thời gian cho việc chấm.” Explain the teacher-centered purpose, current offline exam management/camera grading/review/history capabilities, and future expansion as a plan rather than an available feature. Preserve the three approved body paragraphs verbatim in the UI.
+
+Use a warm light header and a separate author/contact card. Author: “Được phát triển bởi Nhựt Triều”; feedback invitation: “Mọi góp ý từ thầy cô đều giúp SiroMix hoàn thiện hơn.” Contact: “Liên hệ qua Zalo/SĐT: 0358974020”. Keep the selectable phone text, copy-contact action and bottom Home navigation. Put the actual native app version and existing copyright at the bottom. The opening line belongs only on About, not the launcher home screen. Support scrolling and large text on small screens.
+
+The user explicitly requested source changes without building an APK. Keep version/build metadata unchanged (1.0.0+21); no APK is generated for this edit.
+
+
+## 36. Smaller, higher-contrast Home tools and live filter (31 October 2026, build 22)
+
+Shrink the equal two-column function tiles by approximately 10–15% at normal phone sizes, keeping text readable and allowing growth for smaller screens/larger accessibility text. Use stronger coordinated peach, lilac, green, blue and gold backgrounds with dark text/icons, thin accent borders and soft visible shadows. Keep the Sunrise wallpaper, greeting, function order and disabled Trộn đề / Sắp có behavior.
+
+Place a white search field under the greeting and above the tools, hint “Tìm chức năng…”, search icon and clear control “Xóa tìm kiếm”. Filter immediately in memory by case-insensitive Vietnamese names with or without accents, including decomposed accents. Require every nonempty space-separated query word to match; blank/whitespace queries show all tools. Filter without changing route bindings, disabled status or tile size. Preserve original order. Show “Không tìm thấy chức năng phù hợp” for no matches. Clearing restores the complete list. Support scrolling with the keyboard and larger text. Search is not persisted.
+
+Build 22 also includes the previously approved About-page source changes from section 35. Package version is 1.0.0+22; the user explicitly requested an Android APK for this checkpoint. No changes to OMR, scoring, stored data, camera or profile behavior.

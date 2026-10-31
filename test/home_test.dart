@@ -97,7 +97,9 @@ void main() {
           .map((id) => t.getSize(find.byKey(ValueKey('home-$id'))))
           .toList();
       expect(sizes, everyElement(sizes.first));
-      expect(sizes.first.height, lessThanOrEqualTo(110));
+      // Allow the wider test font to wrap labels to three lines.
+      expect(sizes.first.height, lessThanOrEqualTo(100));
+      expect(sizes.first.width, lessThanOrEqualTo(130));
       final colors = <Color?>[];
       for (final card in t.widgetList<HomeFunction>(
         find.byType(HomeFunction),
@@ -161,11 +163,16 @@ void main() {
       await t.pumpAndSettle();
       expect(find.text('Giới thiệu về ứng dụng'), findsOneWidget);
       expect(
-        find.text(
-          'Ứng dụng được phát triển bởi Nhựt Triều, mọi thắc mắc xin liên hệ qua Zalo/SĐT: 0358974020.',
-        ),
+        find.text('Thêm thời gian cho việc dạy, bớt thời gian cho việc chấm.'),
         findsOneWidget,
       );
+      final author = find.text('Được phát triển bởi Nhựt Triều');
+      await t.scrollUntilVisible(
+        author,
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(author, findsOneWidget);
       final copy = find.text('Sao chép số liên hệ');
       await t.scrollUntilVisible(
         copy,
@@ -176,7 +183,119 @@ void main() {
       await t.pumpAndSettle();
       await t.tap(copy);
       await t.pumpAndSettle();
+      expect(find.text('Liên hệ qua Zalo/SĐT: 0358974020'), findsOneWidget);
       expect(copiedText, '0358974020');
+      expect(t.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'Home search handles accents, word filters, empty state and stable actions',
+    (t) async {
+      t.view.physicalSize = const Size(360, 900);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.resetPhysicalSize);
+      addTearDown(t.view.resetDevicePixelRatio);
+      var grading = 0, history = 0, profile = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: HomeLauncher(
+            onGrading: () => grading++,
+            onHistory: () => history++,
+            onProfile: () => profile++,
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      final search = find.byKey(const ValueKey('home-search'));
+      final original = t.getSize(find.byKey(const ValueKey('home-grading')));
+      List<String> visible() => t
+          .widgetList<HomeFunction>(find.byType(HomeFunction))
+          .map((v) => v.id)
+          .toList();
+      Future<void> query(String text) async {
+        await t.enterText(search, text);
+        await t.pumpAndSettle();
+      }
+
+      await query('BÀI');
+      expect(visible(), ['grading', 'results']);
+      expect(t.getSize(find.byKey(const ValueKey('home-results'))), original);
+      await t.tap(find.byKey(const ValueKey('home-results')));
+      await t.pumpAndSettle();
+      expect(history, 1);
+      expect(grading, 0);
+      await query('  cham   nghiem  ');
+      expect(visible(), ['grading']);
+      await t.tap(find.byKey(const ValueKey('home-grading')));
+      await t.pumpAndSettle();
+      expect(grading, 1);
+      await query('tRoN dE');
+      expect(visible(), ['shuffle']);
+      expect(
+        t.widget<InkWell>(find.byKey(const ValueKey('home-shuffle'))).onTap,
+        isNull,
+      );
+      await t.tap(find.byKey(const ValueKey('home-shuffle')));
+      await t.pumpAndSettle();
+      expect([grading, history, profile], [1, 1, 0]);
+      await query('HO SO DU LIEU');
+      expect(visible(), ['profile']);
+      await t.tap(find.byKey(const ValueKey('home-profile')));
+      await t.pumpAndSettle();
+      expect(profile, 1);
+      await query('gio\u031b\u0301i thie\u0302\u0323u');
+      expect(visible(), ['about']);
+      await query('zzzz');
+      expect(visible(), isEmpty);
+      expect(find.text('Không tìm thấy chức năng phù hợp'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('home-search-clear')));
+      await t.pumpAndSettle();
+      expect(visible(), ['grading', 'shuffle', 'results', 'profile', 'about']);
+      expect(t.widget<TextField>(search).controller!.text, isEmpty);
+      expect(t.getSize(find.byKey(const ValueKey('home-grading'))), original);
+      await query('   ');
+      expect(visible().length, 5);
+      expect(t.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'Home search remains usable with keyboard and large text at 320px',
+    (t) async {
+      t.view.physicalSize = const Size(320, 640);
+      t.view.devicePixelRatio = 1;
+      t.view.viewInsets = const FakeViewPadding(bottom: 240);
+      addTearDown(t.view.resetPhysicalSize);
+      addTearDown(t.view.resetDevicePixelRatio);
+      addTearDown(t.view.resetViewInsets);
+      await t.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(1.6)),
+            child: child!,
+          ),
+          home: HomeLauncher(
+            onGrading: () {},
+            onHistory: () {},
+            onProfile: () {},
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      final search = find.byKey(const ValueKey('home-search'));
+      await t.ensureVisible(search);
+      await t.enterText(search, 'tron de');
+      await t.pumpAndSettle();
+      final tile = find.byKey(const ValueKey('home-shuffle'));
+      await t.ensureVisible(tile);
+      await t.pumpAndSettle();
+      expect(find.text('Sắp có'), findsOneWidget);
+      expect(t.widget<InkWell>(tile).onTap, isNull);
+      expect(t.takeException(), isNull);
+      await t.ensureVisible(search);
+      await t.tap(find.byKey(const ValueKey('home-search-clear')));
+      await t.pumpAndSettle();
+      expect(t.widgetList<HomeFunction>(find.byType(HomeFunction)).length, 5);
       expect(t.takeException(), isNull);
     },
   );

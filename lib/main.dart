@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'data.dart';
 import 'grade_dialog.dart';
 import 'ui.dart';
+import 'qm_editor.dart';
 import 'templates.dart';
 import 'scan.dart';
 import 'camera_controls.dart';
@@ -34,60 +35,7 @@ class SiroMixApp extends StatelessWidget {
     title: 'SiroMix',
     debugShowCheckedModeBanner: false,
     themeMode: ThemeMode.light,
-    theme: ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: teal,
-        brightness: Brightness.light,
-        primary: teal,
-        surface: Colors.white,
-      ),
-      scaffoldBackgroundColor: const Color(0xfff5f7f8),
-      textTheme: const TextTheme(
-        bodyMedium: TextStyle(color: ink, fontSize: 14),
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: ink,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: line),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: line),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          minimumSize: const Size(0, 48),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 48),
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: line),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
-          ),
-        ),
-      ),
-    ),
+    theme: siroTheme(),
     home: AppHome(repository: repository),
   );
 }
@@ -183,7 +131,10 @@ class _AppHomeState extends State<AppHome> {
             child: const Text('Hủy'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+            style: FilledButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.red.shade700,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Xóa'),
           ),
@@ -244,26 +195,28 @@ class _AppHomeState extends State<AppHome> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      TextFormField(
-                        controller: input,
-                        autofocus: true,
-                        maxLength: level == 4 ? 20 : 60,
-                        decoration: InputDecoration(
-                          labelText: labels[level],
-                          hintText: hints[level],
+                      SiroInput(
+                        child: TextFormField(
+                          controller: input,
+                          autofocus: true,
+                          maxLength: level == 4 ? 20 : 60,
+                          decoration: InputDecoration(
+                            labelText: labels[level],
+                            hintText: hints[level],
+                          ),
+                          validator: (v) =>
+                              v == null ||
+                                  v.trim().isEmpty ||
+                                  repo.data.children(parent).contains(v.trim())
+                              ? (level == 4
+                                    ? 'Nhập mã mới, không trùng mã đã có.'
+                                    : 'Vui lòng nhập tên mới, không trùng.')
+                              : null,
                         ),
-                        validator: (v) =>
-                            v == null ||
-                                v.trim().isEmpty ||
-                                repo.data.children(parent).contains(v.trim())
-                            ? (level == 4
-                                  ? 'Nhập mã mới, không trùng mã đã có.'
-                                  : 'Vui lòng nhập tên mới, không trùng.')
-                            : null,
                       ),
                       if (level == 4) ...[
                         note(
-                          SheetTemplate.ten.name,
+                          SheetTemplate.compact.name,
                           icon: Icons.description_outlined,
                         ),
                         note(
@@ -372,7 +325,7 @@ class _AppHomeState extends State<AppHome> {
     final keys = repo.data.codes(path);
     final template =
         keys[selectedCode]?.template ??
-        (keys.isEmpty ? SheetTemplate.ten : keys.values.first.template);
+        (keys.isEmpty ? SheetTemplate.compact : keys.values.first.template);
     final chosen = await chooseScanMode(context, template: template);
     if (chosen == null || !mounted) return;
     scanMode = chosen;
@@ -389,7 +342,7 @@ class _AppHomeState extends State<AppHome> {
   Widget build(BuildContext context) {
     if (loading || failed) {
       return Scaffold(
-        appBar: AppBar(title: const Text('SiroMix')),
+        appBar: SiroAppBar(title: const Text('SiroMix')),
         body: Center(
           child: loading
               ? const CircularProgressIndicator()
@@ -421,7 +374,7 @@ class _AppHomeState extends State<AppHome> {
           context,
           MaterialPageRoute<void>(
             builder: (_) => Scaffold(
-              appBar: AppBar(title: const Text('SiroMix')),
+              appBar: SiroAppBar(title: const Text('SiroMix')),
               bottomNavigationBar: AppBottomNavigation(
                 selectedIndex: 3,
                 onHome: goHome,
@@ -446,8 +399,8 @@ class _AppHomeState extends State<AppHome> {
         if (!didPop) back();
       },
       child: Scaffold(
-        backgroundColor: launcher ? const Color(0xfffaf9f7) : null,
-        appBar: AppBar(
+        backgroundColor: appBackground,
+        appBar: SiroAppBar(
           automaticallyImplyLeading: false,
           leading: launcher
               ? null
@@ -462,7 +415,7 @@ class _AppHomeState extends State<AppHome> {
                 launcher
                     ? Icons.category_outlined
                     : Icons.document_scanner_outlined,
-                color: launcher ? orange : teal,
+                color: Colors.white,
                 size: 24,
               ),
               const SizedBox(width: 9),
@@ -481,12 +434,16 @@ class _AppHomeState extends State<AppHome> {
               onPressed: busy ? null : openProfile,
               icon: const Icon(Icons.account_circle_outlined),
             ),
-            const Icon(Icons.cloud_off_outlined, size: 14, color: muted),
+            const Icon(
+              Icons.cloud_off_outlined,
+              size: 14,
+              color: Colors.white70,
+            ),
             const Padding(
               padding: EdgeInsets.only(left: 4, right: 20),
               child: Text(
                 'Offline',
-                style: TextStyle(fontSize: 11, color: muted),
+                style: TextStyle(fontSize: 11, color: Colors.white70),
               ),
             ),
           ],
@@ -538,23 +495,25 @@ class _AppHomeState extends State<AppHome> {
       return [
         heading('Chấm bài trắc nghiệm'),
         const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          initialValue: path.first,
-          key: ValueKey(path.first),
-          isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Năm học',
-            prefixIcon: Icon(Icons.calendar_month_outlined),
+        SiroInput(
+          child: DropdownButtonFormField<String>(
+            initialValue: path.first,
+            key: ValueKey(path.first),
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Năm học',
+              prefixIcon: Icon(Icons.calendar_month_outlined),
+            ),
+            items: repo.data
+                .children([])
+                .map((y) => DropdownMenuItem(value: y, child: Text(y)))
+                .toList(),
+            onChanged: busy
+                ? null
+                : (y) {
+                    if (y != null) setState(() => path = [y]);
+                  },
           ),
-          items: repo.data
-              .children([])
-              .map((y) => DropdownMenuItem(value: y, child: Text(y)))
-              .toList(),
-          onChanged: busy
-              ? null
-              : (y) {
-                  if (y != null) setState(() => path = [y]);
-                },
         ),
         Align(
           alignment: Alignment.centerRight,
@@ -733,7 +692,7 @@ class _AppHomeState extends State<AppHome> {
                     ),
                     const SizedBox(height: 9),
                     Text(
-                      '${entry.value.count} câu · ${score(entry.value.total)} điểm',
+                      '${entry.value.questionCount} câu · ${score(entry.value.total)} điểm',
                       style: const TextStyle(color: muted, fontSize: 12),
                     ),
                   ],
@@ -765,34 +724,30 @@ class _AppHomeState extends State<AppHome> {
       ),
       const SizedBox(height: 16),
       eyebrow('Chấm bài'),
-      heading(
-        scanMode == ScanMode.answers
-            ? 'Quét vùng đáp án'
-            : 'Đưa phiếu vào khung',
-      ),
-      secondary(
-        scanMode == ScanMode.answers
-            ? 'Chọn đúng mã đề trước khi chụp. Số báo danh: Không xác định.'
-            : 'Đặt phiếu phẳng, đủ sáng và đủ mốc đen.',
-      ),
+      heading('Đưa phiếu vào khung'),
+      secondary('Đặt phiếu phẳng, đủ sáng và đủ mốc đen.'),
       const SizedBox(height: 20),
-      DropdownButtonFormField<String>(
-        initialValue: code,
-        key: ValueKey(code),
-        isExpanded: true,
-        decoration: const InputDecoration(labelText: 'Mã đề đang chọn'),
-        items: keys.keys
-            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-            .toList(),
-        onChanged: (v) => setState(() {
-          selectedCode = v;
-          if (keys[v]?.template.supportsAnswersOnly == false) {
+      SiroInput(
+        child: DropdownButtonFormField<String>(
+          initialValue: code,
+          key: ValueKey(code),
+          isExpanded: true,
+          decoration: const InputDecoration(labelText: 'Mã đề đang chọn'),
+          items: keys.keys
+              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+              .toList(),
+          onChanged: (v) => setState(() {
+            selectedCode = v;
             scanMode = ScanMode.full;
-          }
-        }),
+          }),
+        ),
       ),
       if (key != null)
         note(key.template.name, icon: Icons.description_outlined),
+      if (key?.isQm == true)
+        note(
+          'Quét toàn phiếu QM2025 A4. Chỉ chấm các phần đang bật. ${key!.parts.scanCandidate ? 'Đọc số báo danh: 6 chữ số.' : 'Số báo danh: Không xác định.'}',
+        ),
       if (key?.template == SheetTemplate.compact)
         note(
           'Chỉ quét toàn khung trắc nghiệm và mã đề. Chấm câu 1–${key!.count}; các câu còn lại được bỏ qua. Số báo danh: Không xác định.',
@@ -826,7 +781,7 @@ class _AppHomeState extends State<AppHome> {
       ),
       if (key != null && !key.template.readable)
         note(
-          'Mẫu cũ chưa hỗ trợ quét. Chọn mẫu 10 câu hoặc phiếu gọn 40 câu trong cấu hình đề.',
+          'Mẫu cũ đã ngừng hỗ trợ quét. Chọn phiếu NTL hoặc QM2025 A4 trong cấu hình đề.',
           warning: true,
         ),
       if (key != null && !key.complete)
@@ -838,9 +793,7 @@ class _AppHomeState extends State<AppHome> {
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: Image.asset(
-            scanMode == ScanMode.answers
-                ? 'assets/templates/part-answers.png'
-                : key.template.preview!,
+            key.template.preview!,
             height: 320,
             fit: BoxFit.contain,
           ),
@@ -990,337 +943,376 @@ class _KeyEditorState extends State<KeyEditor> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !dirty,
-    onPopInvokedWithResult: (didPop, _) async {
-      if (!didPop && await mayLeave() && context.mounted) {
-        setState(() => dirty = false);
-        Navigator.pop(context);
-      }
-    },
-    child: Scaffold(
-      appBar: AppBar(title: const Text('SiroMix')),
-      bottomNavigationBar: AppBottomNavigation(
-        selectedIndex: 1,
-        onHome: saving ? null : editorHome,
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: ListView(
-              padding: const EdgeInsets.all(22),
-              children: [
-                Text(
-                  widget.contextPath.join(' / '),
-                  style: const TextStyle(color: muted, fontSize: 11),
-                ),
-                const SizedBox(height: 16),
-                eyebrow('Đáp án chuẩn · Khối ${widget.contextPath[2]}'),
-                heading('Mã đề ${widget.code}'),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  key: ValueKey((keyData.templateId, templateRevision)),
-                  initialValue: keyData.templateId,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Loại phiếu trắc nghiệm',
+  Widget build(BuildContext context) {
+    if (keyData.isQm) {
+      return QmKeyEditor(
+        contextPath: widget.contextPath,
+        code: widget.code,
+        original: keyData,
+        onSave: widget.onSave,
+        onHome: widget.onHome,
+        initialDirty: dirty,
+        onTemplateChanged: (next) => setState(() {
+          keyData = next;
+          page = 0;
+          count.text = '${next.count}';
+          common.text = '${next.common}';
+          for (var i = 0; i < points.length; i++) {
+            points[i].text = '${next.points[i]}';
+          }
+          dirty = true;
+          saved = false;
+          templateRevision++;
+        }),
+      );
+    }
+    return PopScope(
+      canPop: !dirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (!didPop && await mayLeave() && context.mounted) {
+          setState(() => dirty = false);
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        appBar: SiroAppBar(title: const Text('SiroMix')),
+        bottomNavigationBar: AppBottomNavigation(
+          selectedIndex: 1,
+          onHome: saving ? null : editorHome,
+        ),
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: ListView(
+                padding: const EdgeInsets.all(22),
+                children: [
+                  Text(
+                    widget.contextPath.join(' / '),
+                    style: const TextStyle(color: muted, fontSize: 11),
                   ),
-                  items:
-                      [
-                            SheetTemplate.ten,
-                            SheetTemplate.compact,
-                            if (keyData.templateId == SheetTemplate.legacy.id)
-                              SheetTemplate.legacy,
-                          ]
-                          .map(
-                            (t) => DropdownMenuItem(
-                              value: t.id,
-                              child: Text(
-                                t.name,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                          .toList(),
-                  onChanged: saving
-                      ? null
-                      : (id) {
-                          if (id == null || id == keyData.templateId) return;
-                          final chosen = SheetTemplate.find(id, 1);
-                          final current = int.tryParse(count.text);
-                          if (current == null ||
-                              current < 1 ||
-                              current > chosen.capacity) {
-                            setState(
-                              () => error =
-                                  'Giảm số câu xuống tối đa ${chosen.capacity} trước khi đổi loại phiếu. Dữ liệu cũ chưa bị thay đổi.',
-                            );
-                            setState(() => templateRevision++);
-                            return;
-                          }
-                          setState(() {
-                            if (chosen.capacity > keyData.answers.length) {
-                              final extra =
-                                  chosen.capacity - keyData.answers.length;
-                              keyData.answers.addAll(List.filled(extra, ''));
-                              keyData.points.addAll(
-                                List.filled(extra, keyData.common),
-                              );
-                              points.addAll(
-                                List.generate(
-                                  extra,
-                                  (_) => TextEditingController(
-                                    text: '${keyData.common}',
+                  const SizedBox(height: 16),
+                  eyebrow('Đáp án chuẩn · Khối ${widget.contextPath[2]}'),
+                  heading('Mã đề ${widget.code}'),
+                  const SizedBox(height: 16),
+                  SiroInput(
+                    child: DropdownButtonFormField<String>(
+                      key: ValueKey((keyData.templateId, templateRevision)),
+                      initialValue: keyData.templateId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Loại phiếu trắc nghiệm',
+                      ),
+                      items:
+                          [
+                                SheetTemplate.compact,
+                                SheetTemplate.qm2025,
+                                if (!keyData.template.readable)
+                                  keyData.template,
+                              ]
+                              .map(
+                                (t) => DropdownMenuItem(
+                                  value: t.id,
+                                  child: Text(
+                                    t.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              );
-                            }
-                            keyData.templateId = id;
-                            keyData.templateVersion = 1;
-                            keyData.count = current;
-                            dirty = true;
-                            saved = false;
-                            error = '';
-                          });
-                        },
-                ),
-                const SizedBox(height: 12),
-                if (keyData.template.preview != null)
-                  ExpansionTile(
-                    title: const Text('Xem mẫu phiếu'),
-                    children: [
-                      Image.asset(
-                        keyData.template.preview!,
-                        height: 240,
-                        fit: BoxFit.contain,
-                      ),
-                    ],
-                  ),
-
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: count,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText:
-                              'Số câu · tối đa ${keyData.template.capacity}',
-                        ),
-                        onChanged: (v) {
-                          final n = int.tryParse(v);
-                          setState(() {
-                            dirty = true;
-                            saved = false;
-                            if (n != null &&
-                                n >= 1 &&
-                                n <= keyData.template.capacity) {
-                              keyData.count = n;
-                              page = math.min(page, (n - 1) ~/ 10);
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: common,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: const InputDecoration(
-                          labelText: 'Điểm chung mỗi câu',
-                        ),
-                        onChanged: updateCommon,
-                      ),
-                    ),
-                  ],
-                ),
-                action(
-                  'Áp dụng điểm chung cho mọi câu',
-                  saving
-                      ? null
-                      : () {
-                          if (!validPoints(common.text)) {
-                            setState(
-                              () => error =
-                                  'Số câu phải từ 1–${keyData.template.capacity}, điểm phải là số không âm.',
-                            );
-                            return;
-                          }
-                          updateCommon(common.text);
-                        },
-                  outline: true,
-                  icon: Icons.copy,
-                ),
-                note(
-                  'Tổng điểm: ${score(keyData.total)}\nĐiểm tự cộng từ từng câu, không chia thang điểm.',
-                  icon: Icons.functions,
-                ),
-                sectionTitle(
-                  'Đáp án & điểm',
-                  '${keyData.answers.take(keyData.count).where((a) => a.isNotEmpty).length}/${keyData.count} câu đã nhập',
-                ),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    for (var p = 0; p < (keyData.count + 9) ~/ 10; p++)
-                      ChoiceChip(
-                        label: Text(
-                          '${p * 10 + 1}–${math.min(keyData.count, p * 10 + 10)}',
-                        ),
-                        selected: p == page,
-                        onSelected: (_) => setState(() => page = p),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Row(
-                  children: [
-                    SizedBox(
-                      width: 30,
-                      child: Text(
-                        'Câu',
-                        style: TextStyle(fontSize: 11, color: muted),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Đáp án đúng',
-                        style: TextStyle(fontSize: 11, color: muted),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 66,
-                      child: Text(
-                        'Điểm',
-                        style: TextStyle(fontSize: 11, color: muted),
-                      ),
-                    ),
-                  ],
-                ),
-                for (
-                  var i = page * 10;
-                  i < math.min(keyData.count, page * 10 + 10);
-                  i++
-                )
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 7),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 30,
-                          child: Text(
-                            '${i + 1}',
-                            style: const TextStyle(fontSize: 12, color: muted),
-                          ),
-                        ),
-                        Expanded(
-                          child: Row(
-                            children: [
-                              for (final a in ['A', 'B', 'C', 'D'])
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 4),
-                                    child: Semantics(
-                                      label: 'Câu ${i + 1}, đáp án $a',
-                                      selected: keyData.answers[i] == a,
-                                      child: OutlinedButton(
-                                        style: OutlinedButton.styleFrom(
-                                          padding: EdgeInsets.zero,
-                                          minimumSize: const Size(0, 44),
-                                          backgroundColor:
-                                              keyData.answers[i] == a
-                                              ? teal
-                                              : Colors.white,
-                                          foregroundColor:
-                                              keyData.answers[i] == a
-                                              ? Colors.white
-                                              : muted,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              9,
-                                            ),
-                                          ),
-                                        ),
-                                        onPressed: saving
-                                            ? null
-                                            : () => setState(() {
-                                                keyData.answers[i] = a;
-                                                dirty = true;
-                                                saved = false;
-                                              }),
-                                        child: Text(a),
+                              )
+                              .toList(),
+                      onChanged: saving
+                          ? null
+                          : (id) {
+                              if (id == null || id == keyData.templateId) {
+                                return;
+                              }
+                              final chosen = SheetTemplate.find(id, 1);
+                              final current = int.tryParse(count.text);
+                              if (current == null ||
+                                  current < 1 ||
+                                  current > chosen.capacity) {
+                                setState(
+                                  () => error =
+                                      'Giảm số câu xuống tối đa ${chosen.capacity} trước khi đổi loại phiếu. Dữ liệu cũ chưa bị thay đổi.',
+                                );
+                                setState(() => templateRevision++);
+                                return;
+                              }
+                              setState(() {
+                                if (chosen.capacity > keyData.answers.length) {
+                                  final extra =
+                                      chosen.capacity - keyData.answers.length;
+                                  keyData.answers.addAll(
+                                    List.filled(extra, ''),
+                                  );
+                                  keyData.points.addAll(
+                                    List.filled(extra, keyData.common),
+                                  );
+                                  points.addAll(
+                                    List.generate(
+                                      extra,
+                                      (_) => TextEditingController(
+                                        text: '${keyData.common}',
                                       ),
                                     ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          width: 66,
-                          child: TextField(
-                            key: ValueKey('points-$i'),
-                            controller: points[i],
-                            textAlign: TextAlign.center,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 12,
-                              ),
-                              errorText: validPoints(points[i].text)
-                                  ? null
-                                  : '≥ 0',
-                            ),
-                            onChanged: (v) => setState(() {
-                              dirty = true;
-                              saved = false;
-                              if (validPoints(v)) {
-                                keyData.points[i] = decimal(v)!;
-                              }
-                            }),
-                          ),
+                                  );
+                                }
+                                keyData.templateId = id;
+                                keyData.templateVersion = 1;
+                                keyData.count = current;
+                                dirty = true;
+                                saved = false;
+                                error = '';
+                              });
+                            },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (keyData.template.preview != null)
+                    ExpansionTile(
+                      title: const Text('Xem mẫu phiếu'),
+                      children: [
+                        Image.asset(
+                          keyData.template.preview!,
+                          height: 240,
+                          fit: BoxFit.contain,
                         ),
                       ],
                     ),
+
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: SiroInput(
+                          child: TextField(
+                            controller: count,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText:
+                                  'Số câu · tối đa ${keyData.template.capacity}',
+                            ),
+                            onChanged: (v) {
+                              final n = int.tryParse(v);
+                              setState(() {
+                                dirty = true;
+                                saved = false;
+                                if (n != null &&
+                                    n >= 1 &&
+                                    n <= keyData.template.capacity) {
+                                  keyData.count = n;
+                                  page = math.min(page, (n - 1) ~/ 10);
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SiroInput(
+                          child: TextField(
+                            controller: common,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: const InputDecoration(
+                              labelText: 'Điểm chung mỗi câu',
+                            ),
+                            onChanged: updateCommon,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                if (error.isNotEmpty)
-                  Text(error, style: const TextStyle(color: Colors.red)),
-                action(
-                  saved ? 'Đã lưu cấu hình đề' : 'Lưu cấu hình đề',
-                  saving ? null : save,
-                  icon: Icons.check,
-                ),
-                action(
-                  'Quét với mã đề này',
-                  saving
-                      ? null
-                      : () async {
-                          if (dirty || !keyData.complete) {
-                            await save();
-                          }
-                          if (!dirty && keyData.complete && context.mounted) {
-                            Navigator.pop(context, true);
-                          }
-                        },
-                  outline: true,
-                  icon: Icons.document_scanner_outlined,
-                ),
-              ],
+                  action(
+                    'Áp dụng điểm chung cho mọi câu',
+                    saving
+                        ? null
+                        : () {
+                            if (!validPoints(common.text)) {
+                              setState(
+                                () => error =
+                                    'Số câu phải từ 1–${keyData.template.capacity}, điểm phải là số không âm.',
+                              );
+                              return;
+                            }
+                            updateCommon(common.text);
+                          },
+                    outline: true,
+                    icon: Icons.copy,
+                  ),
+                  note(
+                    'Tổng điểm: ${score(keyData.total)}\nĐiểm tự cộng từ từng câu, không chia thang điểm.',
+                    icon: Icons.functions,
+                  ),
+                  sectionTitle(
+                    'Đáp án & điểm',
+                    '${keyData.answers.take(keyData.count).where((a) => a.isNotEmpty).length}/${keyData.count} câu đã nhập',
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (var p = 0; p < (keyData.count + 9) ~/ 10; p++)
+                        ChoiceChip(
+                          label: Text(
+                            '${p * 10 + 1}–${math.min(keyData.count, p * 10 + 10)}',
+                          ),
+                          selected: p == page,
+                          onSelected: (_) => setState(() => page = p),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Row(
+                    children: [
+                      SizedBox(
+                        width: 30,
+                        child: Text(
+                          'Câu',
+                          style: TextStyle(fontSize: 11, color: muted),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Đáp án đúng',
+                          style: TextStyle(fontSize: 11, color: muted),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 66,
+                        child: Text(
+                          'Điểm',
+                          style: TextStyle(fontSize: 11, color: muted),
+                        ),
+                      ),
+                    ],
+                  ),
+                  for (
+                    var i = page * 10;
+                    i < math.min(keyData.count, page * 10 + 10);
+                    i++
+                  )
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 7),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 30,
+                            child: Text(
+                              '${i + 1}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: muted,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                for (final a in ['A', 'B', 'C', 'D'])
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 4),
+                                      child: Semantics(
+                                        label: 'Câu ${i + 1}, đáp án $a',
+                                        selected: keyData.answers[i] == a,
+                                        child: OutlinedButton(
+                                          style: OutlinedButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            minimumSize: const Size(0, 44),
+                                            backgroundColor:
+                                                keyData.answers[i] == a
+                                                ? teal
+                                                : Colors.white,
+                                            foregroundColor:
+                                                keyData.answers[i] == a
+                                                ? Colors.white
+                                                : muted,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(9),
+                                            ),
+                                          ),
+                                          onPressed: saving
+                                              ? null
+                                              : () => setState(() {
+                                                  keyData.answers[i] = a;
+                                                  dirty = true;
+                                                  saved = false;
+                                                }),
+                                          child: Text(a),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            width: 66,
+                            child: SiroInput(
+                              child: TextField(
+                                key: ValueKey('points-$i'),
+                                controller: points[i],
+                                textAlign: TextAlign.center,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                decoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 12,
+                                  ),
+                                  errorText: validPoints(points[i].text)
+                                      ? null
+                                      : '≥ 0',
+                                ),
+                                onChanged: (v) => setState(() {
+                                  dirty = true;
+                                  saved = false;
+                                  if (validPoints(v)) {
+                                    keyData.points[i] = decimal(v)!;
+                                  }
+                                }),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (error.isNotEmpty)
+                    Text(error, style: const TextStyle(color: Colors.red)),
+                  action(
+                    saved ? 'Đã lưu cấu hình đề' : 'Lưu cấu hình đề',
+                    saving ? null : save,
+                    icon: Icons.check,
+                  ),
+                  action(
+                    'Quét với mã đề này',
+                    saving
+                        ? null
+                        : () async {
+                            if (dirty || !keyData.complete) {
+                              await save();
+                            }
+                            if (!dirty && keyData.complete && context.mounted) {
+                              Navigator.pop(context, true);
+                            }
+                          },
+                    outline: true,
+                    icon: Icons.document_scanner_outlined,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

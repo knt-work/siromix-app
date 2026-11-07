@@ -76,3 +76,11 @@ User acceptance, 30 October 2026: the user reported build 19 runs satisfactorily
 
 
 Build 21 (31 October 2026) separates compact code-field fill evidence from preprinted numeral blur using both central and side-band samples. The user-labeled 209 source photo and the existing 132 photo are regression fixtures; answer handling and the ten-question reader are unchanged. See SPEC.md section 34.
+
+Build 24 (6 November 2026) adds QM2025 A4 full-sheet reading and integrated multipart key configuration (40 ABCD / 8 True-False / 6 numeric capacity). See SPEC.md section 38 and docs/templates/qm2025-a4-v1.md. The 137-test suite passes, including PDF-derived synthetic recognition and multipart grading/storage/widget checks. Physical-photo calibration for this exact template is pending; no general accuracy claim is made.
+
+
+Build 26 retires the ten-question/partial scanner and makes the renamed NTL frame the default. Only NTL and QM2025 full capture remain active; archived ten-question data/snapshots still decode. QM answer configuration is continuous without pagination. The new report of difficult QM positioning awaits real photographs; no fix or physical accuracy claim is recorded for that report yet.
+
+
+Build 27 investigates the QM framing report with seven supplied real photographs. Local marker mesh correction, smaller-marker detection and background sampling beyond printed outlines make all seven codes and Part I readings match visual ground truth; six candidate fields are clear and one retains a pending column. All seven low-resolution probes and updated framing checks pass. The QM guide is larger and accepts a complete sufficiently sized sheet inside the preview. Full suite: 131 passing tests. See SPEC.md section 41 and the QM template note for limits, privacy and phone-test follow-up. Physical shaded Parts II/III and broader lighting/device conditions remain unverified.

@@ -151,7 +151,7 @@ void main() {
     'live probe detects the supplied template without doing answer recognition',
     () {
       final reference = img.decodePng(
-        File('assets/templates/abcd-10-v1.png').readAsBytesSync(),
+        File('assets/templates/abcd-40-compact-v1.png').readAsBytesSync(),
       )!;
       final paper = img.copyResize(reference, width: 800);
       final scene = img.Image(width: 1000, height: 1778)
@@ -174,15 +174,18 @@ void main() {
         height: scene.height,
         rowStride: scene.width,
       );
-      final probe = probeTenSheet(input);
+      final probe = probeCompactSheet(input);
       expect(probe.found, true);
       expect(
         CameraGuideLayout(const Size(300, 400), 9 / 16).containsSheet(probe),
         true,
       );
       expect(
-        probeTenSheet({'width': 100, 'height': 100, 'pixels': Uint8List(10000)})
-            .found,
+        probeCompactSheet({
+          'width': 100,
+          'height': 100,
+          'pixels': Uint8List(10000),
+        }).found,
         false,
       );
     },

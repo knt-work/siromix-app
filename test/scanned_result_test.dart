@@ -6,7 +6,6 @@ import 'package:image/image.dart' as img;
 import 'package:siromix/data.dart';
 import 'package:siromix/omr.dart';
 import 'package:siromix/scan.dart';
-import 'package:siromix/history.dart';
 
 import 'widget_test.dart' show MemoryStorage;
 
@@ -50,174 +49,6 @@ void main() {
   }
 
   testWidgets(
-    'answer-only mode locks the preselected code, saves unknown SBD and shows it in history',
-    (t) async {
-      t.view.physicalSize = const Size(400, 1500);
-      t.view.devicePixelRatio = 1;
-      addTearDown(t.view.resetPhysicalSize);
-      addTearDown(t.view.resetDevicePixelRatio);
-      final r = await repo();
-      await r.update((d) {
-        d.addCode(path, 'TN-A');
-        final k = d.codes(path)['132']!.copy();
-        k.answers[0] = 'C';
-        k.answers[1] = 'D';
-        d.saveKey(path, 'TN-A', k);
-      });
-      await t.pumpWidget(
-        MaterialApp(
-          home: ScannedResult(
-            repository: r,
-            contextPath: path,
-            read: read(uncertain: false),
-            fixedCode: 'TN-A',
-          ),
-        ),
-      );
-      await t.pumpAndSettle();
-      expect(find.text('Số báo danh: Không xác định'), findsOneWidget);
-      expect(find.text('Mã đề đã chọn: TN-A'), findsOneWidget);
-      expect(find.byType(TextFormField), findsNothing);
-      expect(find.byType(DropdownButtonFormField<String>), findsNothing);
-      expect(find.text('Ảnh số báo danh và mã đề'), findsNothing);
-      expect(r.data.counters, isEmpty);
-      final confirm = find.widgetWithText(FilledButton, 'Xác nhận điểm');
-      await t.ensureVisible(confirm);
-      await t.tap(confirm);
-      await t.pumpAndSettle();
-      final paper = r.data.papers.single;
-      expect(paper.code, 'TN-A');
-      expect(paper.candidate, '');
-      expect(paper.number, 1);
-      expect(paper.grade.score, 0);
-      expect(find.text('Bài số 1'), findsOneWidget);
-      expect(find.text('Xác nhận điểm'), findsNothing);
-      expect(r.data.papers.length, 1);
-      final reopened = ExamRepository(r.storage);
-      await reopened.load();
-      await t.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: HistoryView(repository: reopened, path: path),
-          ),
-        ),
-      );
-      await t.pumpAndSettle();
-      await t.enterText(find.byType(TextField), 'không xác định');
-      await t.pumpAndSettle();
-      expect(find.text('1 bài đã chấm'), findsOneWidget);
-      await t.tap(find.text('Bài số 1 · SBD Không xác định'));
-      await t.pumpAndSettle();
-      expect(find.text('SBD Không xác định · Mã đề TN-A'), findsOneWidget);
-    },
-  );
-  testWidgets(
-    'missing preselected key never falls back to a detected key in answer-only mode',
-    (t) async {
-      final r = await repo();
-      await t.pumpWidget(
-        MaterialApp(
-          home: ScannedResult(
-            repository: r,
-            contextPath: path,
-            read: read(uncertain: false),
-            fixedCode: 'missing',
-          ),
-        ),
-      );
-      await t.pumpAndSettle();
-      expect(find.text('Xác nhận điểm'), findsNothing);
-      expect(
-        find.textContaining('Mã đề đã chọn không còn hợp lệ'),
-        findsOneWidget,
-      );
-      expect(r.data.papers, isEmpty);
-      expect(r.data.counters, isEmpty);
-    },
-  );
-  testWidgets(
-    'answer-only uncertain marks still block confirmation; retake saves nothing',
-    (t) async {
-      t.view.physicalSize = const Size(400, 1500);
-      t.view.devicePixelRatio = 1;
-      addTearDown(t.view.resetPhysicalSize);
-      addTearDown(t.view.resetDevicePixelRatio);
-      final r = await repo();
-      bool? outcome;
-      await t.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (ctx) => Scaffold(
-              body: TextButton(
-                onPressed: () async {
-                  outcome = await Navigator.push<bool>(
-                    ctx,
-                    MaterialPageRoute(
-                      builder: (_) => ScannedResult(
-                        repository: r,
-                        contextPath: path,
-                        read: read(),
-                        fixedCode: '132',
-                      ),
-                    ),
-                  );
-                },
-                child: const Text('Open'),
-              ),
-            ),
-          ),
-        ),
-      );
-      await t.tap(find.text('Open'));
-      await t.pumpAndSettle();
-      final confirm = find.widgetWithText(FilledButton, 'Xác nhận điểm');
-      await t.ensureVisible(confirm);
-      expect(t.widget<FilledButton>(confirm).onPressed, isNull);
-      final retake = find.text('Chụp lại đáp án');
-      await t.ensureVisible(retake);
-      await t.tap(retake);
-      await t.pumpAndSettle();
-      expect(outcome, false);
-      expect(r.data.papers, isEmpty);
-      expect(r.data.counters, isEmpty);
-    },
-  );
-  testWidgets(
-    'full-sheet mode still requires six-digit SBD and never treats a missing SBD as anonymous',
-    (t) async {
-      t.view.physicalSize = const Size(400, 1500);
-      t.view.devicePixelRatio = 1;
-      addTearDown(t.view.resetPhysicalSize);
-      addTearDown(t.view.resetDevicePixelRatio);
-      final r = await repo(), original = read(uncertain: false);
-      final missing = OmrRead(
-        answers: original.answers,
-        candidate: const [],
-        code: original.code,
-        aligned: picture,
-        answerCrops: original.answerCrops,
-        candidateCrop: picture,
-        codeCrop: picture,
-      );
-      await t.pumpWidget(
-        MaterialApp(
-          home: ScannedResult(repository: r, contextPath: path, read: missing),
-        ),
-      );
-      await t.pumpAndSettle();
-      expect(find.byType(TextFormField), findsOneWidget);
-      final confirm = find.widgetWithText(FilledButton, 'Xác nhận điểm');
-      await t.ensureVisible(confirm);
-      await t.tap(confirm);
-      await t.pumpAndSettle();
-      expect(r.data.papers, isEmpty);
-      expect(r.data.counters, isEmpty);
-      final field = find.byType(TextFormField);
-      await t.ensureVisible(field);
-      expect(find.text('Nhập đủ 6 chữ số theo phiếu.'), findsOneWidget);
-    },
-  );
-  testWidgets(
     'uncertain responses gate final score and allocate paper number only on confirm',
     (t) async {
       t.view.physicalSize = const Size(400, 1400);
@@ -249,7 +80,7 @@ void main() {
       final reopened = ExamRepository(r.storage);
       await reopened.load();
       expect(reopened.data.counters.values.single, 1);
-      expect(reopened.data.papers.single.candidate, '001286');
+      expect(reopened.data.papers.single.candidate, '');
       expect(reopened.data.papers.single.grade.score, 3);
     },
   );

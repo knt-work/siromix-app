@@ -68,7 +68,7 @@ void main() {
       r.data.papers.single.grade.score,
     );
     expect(migrated.data.counters, r.data.counters);
-    expect(jsonDecode(disk.value!)['version'], 5);
+    expect(jsonDecode(disk.value!)['version'], 7);
     await migrated.update(
       (d) => d.profile = UserProfile(
         id: d.profile.id,

@@ -14,6 +14,7 @@ import 'templates.dart';
 import 'ui.dart';
 import 'scan_flow.dart';
 import 'navigation.dart';
+import 'qm_review.dart';
 
 class SheetScan extends StatefulWidget {
   const SheetScan({
@@ -39,12 +40,10 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
   SheetTemplate get template => widget.repository.data
       .codes(widget.contextPath)[widget.initialCode]!
       .template;
-  bool get compact => template == SheetTemplate.compact;
-  double get guideAspect => mode == ScanMode.answers
-      ? SheetPart.answers.aspect
-      : (compact
-            ? CompactSheetGeometry.width / CompactSheetGeometry.height
-            : 1067 / 1549);
+  bool get qm => template == SheetTemplate.qm2025;
+  double get guideAspect => qm
+      ? QmSheetGeometry.width / QmSheetGeometry.height
+      : CompactSheetGeometry.width / CompactSheetGeometry.height;
   String? failure;
   bool processing = false,
       away = false,
@@ -162,13 +161,7 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
         pixelStride: plane.bytesPerPixel ?? (bgra ? 4 : 1),
         bgra: bgra,
       );
-      input['part'] = SheetPart.answers.name;
-      final probe = await compute(
-        compact
-            ? probeCompactSheet
-            : (mode == ScanMode.full ? probeTenSheet : probeTenPart),
-        input,
-      );
+      final probe = await compute(qm ? probeQmSheet : probeCompactSheet, input);
       if (!mounted ||
           !active ||
           processing ||
@@ -188,7 +181,8 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
           size,
           aspect,
           markerAspect: guideAspect,
-        ).containsSheet(probe, flexible: mode == ScanMode.answers);
+          guideFraction: qm ? .9 : .8,
+        ).containsSheet(probe, flexible: qm);
         setState(() => guide.observe(matches, received));
       }
     } catch (e) {
@@ -229,7 +223,7 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    mode = template.supportsAnswersOnly ? widget.mode : ScanMode.full;
+    mode = widget.mode;
     WidgetsBinding.instance.addObserver(this);
     freshnessTimer = Timer.periodic(const Duration(milliseconds: 400), (_) {
       if (mounted && active && !processing && guide.expire(DateTime.now())) {
@@ -356,7 +350,6 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
 
   Future<void> capture() async {
     final c = camera;
-    final captureMode = mode;
     if (c == null ||
         !c.value.isInitialized ||
         processing ||
@@ -379,31 +372,16 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
       photo = await c.takePicture();
       final bytes = await photo.readAsBytes();
       final reference = await rootBundle.load(template.preview!);
-      if (captureMode == ScanMode.answers) {
-        final read = await compute(recognizeTenPart, <String, Object>{
-          'photo': bytes,
-          'reference': reference.buffer.asUint8List(),
-          'part': SheetPart.answers.name,
-        });
-        if (!mounted) return;
-        away = true;
-        generation++;
-        camera = null;
-        await closeCamera(c);
-        if (!mounted) return;
-        await showRead(answersOnlyRead(read), fixedCode: widget.initialCode);
-      } else {
-        final read = await compute(
-          compact ? recognizeCompactSheet : recognizeTenSheet,
-          {'photo': bytes, 'reference': reference.buffer.asUint8List()},
-        );
-        if (!mounted) return;
-        away = true;
-        generation++;
-        camera = null;
-        await closeCamera(c);
-        if (mounted) await showRead(read);
-      }
+      final read = await compute(
+        qm ? recognizeQmSheet : recognizeCompactSheet,
+        {'photo': bytes, 'reference': reference.buffer.asUint8List()},
+      );
+      if (!mounted) return;
+      away = true;
+      generation++;
+      camera = null;
+      await closeCamera(c);
+      if (mounted) await showRead(read);
     } catch (e) {
       if (mounted) {
         setState(
@@ -436,7 +414,7 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> showRead(OmrRead read, {String? fixedCode}) async {
+  Future<void> showRead(OmrRead read) async {
     final previousCount = widget.repository.data.papers.length;
     await Navigator.push<bool>(
       context,
@@ -446,7 +424,6 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
           contextPath: widget.contextPath,
           read: read,
           onHome: widget.onHome,
-          fixedCode: fixedCode,
           template: template,
         ),
       ),
@@ -514,6 +491,7 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
           return CaptureOverlay(
             imageAspect: aspect,
             guideAspect: guideAspect,
+            guideFraction: qm ? .9 : .8,
             onCapture:
                 ready &&
                     !processing &&
@@ -569,18 +547,10 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 heading('Hướng dẫn chụp'),
-                if (mode == ScanMode.answers)
-                  Image.asset(
-                    'assets/templates/part-answers.png',
-                    height: 240,
-                    fit: BoxFit.contain,
-                  ),
                 secondary(
-                  mode == ScanMode.full
-                      ? (compact
-                            ? 'Chụp trọn khung trắc nghiệm có bốn mốc góc ngoài cùng, mã đề và đủ 40 câu. Không cần chụp toàn bộ tờ A4 hoặc số báo danh. Chỉ chấm số câu đã cấu hình trong đề.'
-                            : 'Đưa đủ bốn mốc ngoài cùng của trang 1 vào vùng camera. Phần tự luận không được chấm.')
-                      : 'Đưa đủ 4 mốc đen và toàn bộ 10 hàng đáp án vào vùng camera. Bài được chấm theo mã đề ${widget.initialCode}; số báo danh là Không xác định. Không cần chụp số báo danh hoặc mã đề.',
+                  qm
+                      ? 'Chụp toàn bộ phiếu QM2025 A4, lấy đủ bốn mốc góc ngoài cùng. Chấm theo cấu hình mã đề.'
+                      : 'Chụp trọn khung trắc nghiệm có bốn mốc góc ngoài cùng, mã đề và đủ 40 câu. Không cần chụp toàn bộ tờ A4.',
                 ),
                 secondary(
                   'Giữ phiếu phẳng, đủ sáng và điện thoại song song với phiếu. Chạm vùng camera để chụp. Màu khung chỉ hỗ trợ căn phiếu; ảnh sẽ được kiểm tra lại sau khi chụp.',
@@ -601,16 +571,14 @@ class _SheetScanState extends State<SheetScan> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('SiroMix')),
+    appBar: SiroAppBar(title: const Text('SiroMix')),
     bottomNavigationBar: AppBottomNavigation(
       selectedIndex: 2,
       onHome: processing ? null : scanHome,
     ),
     body: CameraScreenLayout(
-      title: mode == ScanMode.full ? 'Đưa phiếu vào khung' : 'Quét vùng đáp án',
-      modeLabel: mode == ScanMode.answers
-          ? '${mode.label} · Mã đề ${widget.initialCode}'
-          : mode.label,
+      title: 'Đưa phiếu vào khung',
+      modeLabel: mode.label,
       onMode: processing || modalOpen ? null : changeMode,
       onHelp: processing || modalOpen ? null : showGuide,
       preview: cameraViewport(),
@@ -629,14 +597,12 @@ class ScannedResult extends StatefulWidget {
     required this.contextPath,
     required this.read,
     this.onHome,
-    this.fixedCode,
-    this.template = SheetTemplate.ten,
+    this.template = SheetTemplate.compact,
   });
   final ExamRepository repository;
   final List<String> contextPath;
   final OmrRead read;
   final VoidCallback? onHome;
-  final String? fixedCode;
   final SheetTemplate template;
   @override
   State<ScannedResult> createState() => _ScannedResultState();
@@ -650,8 +616,10 @@ class _ScannedResultState extends State<ScannedResult> {
   bool confirming = false;
   String? error;
   final form = GlobalKey<FormState>();
-  bool get answersOnly => widget.fixedCode != null;
-  bool get unknownCandidate => answersOnly || !widget.template.readsCandidate;
+  bool get unknownCandidate =>
+      !widget.template.readsCandidate ||
+      (widget.template == SheetTemplate.qm2025 &&
+          !(keys[selectedCode]?.parts.scanCandidate ?? false));
   Map<String, ExamKey> get keys => Map.fromEntries(
     widget.repository.data
         .codes(widget.contextPath)
@@ -663,26 +631,29 @@ class _ScannedResultState extends State<ScannedResult> {
               e.value.complete,
         ),
   );
+  List<int> indices(ExamKey key) => key.scanIndices;
+  List<ResponseMark> selectedResponses(ExamKey key) =>
+      indices(key).map((i) => responses[i]).toList();
   GradeResult? get result =>
       selectedCode == null || !keys.containsKey(selectedCode)
       ? null
       : GradeResult(
           keys[selectedCode]!,
-          responses.take(keys[selectedCode]!.count).toList(),
+          selectedResponses(keys[selectedCode]!),
         );
   @override
   void initState() {
     super.initState();
     candidate = TextEditingController(
-      text: !unknownCandidate && widget.read.candidateClear
-          ? widget.read.candidateText
-          : '',
+      text: widget.read.candidateClear ? widget.read.candidateText : '',
     );
     responses = List.of(widget.read.answers);
-    if (answersOnly) {
-      if (keys.containsKey(widget.fixedCode)) selectedCode = widget.fixedCode;
-    } else if (widget.read.codeClear &&
-        keys.containsKey(widget.read.codeText)) {
+    if (widget.template == SheetTemplate.qm2025) {
+      while (responses.length < 54) {
+        responses.add(const ResponseMark(MarkState.uncertain));
+      }
+    }
+    if (widget.read.codeClear && keys.containsKey(widget.read.codeText)) {
       selectedCode = widget.read.codeText;
     }
   }
@@ -694,6 +665,23 @@ class _ScannedResultState extends State<ScannedResult> {
   }
 
   Future<void> review(int index) async {
+    final key = keys[selectedCode]!;
+    final logical = indices(key).indexOf(index);
+    if (key.kind(logical) != QuestionKind.choice) {
+      final value = await showModalBottomSheet<ResponseMark>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => QmReviewSheet(
+          label: key.questionLabel(logical),
+          kind: key.kind(logical),
+          mark: responses[index],
+          crop: widget.read.answerCrops[index],
+        ),
+      );
+      if (value != null && mounted) setState(() => responses[index] = value);
+      return;
+    }
+
     final value = await showModalBottomSheet<ResponseMark>(
       context: context,
       isScrollControlled: true,
@@ -705,7 +693,7 @@ class _ScannedResultState extends State<ScannedResult> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               eyebrow('Kiểm tra thủ công'),
-              heading('Câu ${index + 1}'),
+              heading(key.questionLabel(logical)),
               Image.memory(
                 widget.read.answerCrops[index],
                 fit: BoxFit.contain,
@@ -747,29 +735,35 @@ class _ScannedResultState extends State<ScannedResult> {
   }
 
   Widget answerRow(int index, ExamKey key) {
+    final logical = indices(key).indexOf(index);
+    final grading = GradeResult(key, selectedResponses(key));
     final response = responses[index];
     final pending = response.state == MarkState.uncertain;
-    final correct =
-        response.state == MarkState.single &&
-        response.answer == key.answers[index];
-    final background = pending
+    final correct = grading.matches(logical);
+    final partial =
+        key.kind(logical) == QuestionKind.trueFalse &&
+        grading.correctIdeas(logical) > 0 &&
+        !correct;
+    final background = pending || partial
         ? const Color(0xfffff5db)
         : correct
         ? const Color(0xffe7f5e9)
         : const Color(0xffffebee);
-    final foreground = pending
+    final foreground = pending || partial
         ? const Color(0xff795500)
         : correct
         ? const Color(0xff256436)
         : const Color(0xffa12838);
     final chosen = switch (response.state) {
-      MarkState.single => 'Chọn ${response.answer}',
+      MarkState.single => 'Chọn ${key.displayAnswer(logical, response.answer)}',
       MarkState.blank => 'Bỏ trống · 0 điểm',
       MarkState.multiple => 'Nhiều đáp án · 0 điểm',
       MarkState.uncertain => 'Cần kiểm tra',
     };
     final status = pending
         ? 'Cần kiểm tra'
+        : key.kind(logical) == QuestionKind.trueFalse
+        ? 'Đúng ${grading.correctIdeas(logical)}/4 ý · ${score(grading.earned(logical))} đ'
         : correct
         ? 'Đúng'
         : 'Sai';
@@ -778,6 +772,7 @@ class _ScannedResultState extends State<ScannedResult> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: background,
+        boxShadow: surfaceShadows,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Padding(
@@ -785,7 +780,7 @@ class _ScannedResultState extends State<ScannedResult> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final title = Text(
-              'Câu ${index + 1} - $chosen',
+              '${key.questionLabel(logical)} - $chosen',
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             );
             final thumbnail = Container(
@@ -794,7 +789,7 @@ class _ScannedResultState extends State<ScannedResult> {
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border.all(color: foreground.withValues(alpha: .22)),
+                boxShadow: surfaceShadows,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Image.memory(
@@ -806,7 +801,7 @@ class _ScannedResultState extends State<ScannedResult> {
               ),
             );
             final subtitle = Text(
-              'Đáp án đúng: ${key.answers[index]} · $status',
+              'Đáp án đúng: ${key.displayAnswer(logical, key.expected(logical))} · $status',
               style: TextStyle(color: foreground, fontSize: 12),
             );
             final reviewButton = paperNumber == null
@@ -878,7 +873,7 @@ class _ScannedResultState extends State<ScannedResult> {
               candidate: unknownCandidate ? '' : candidate.text,
               candidateUnknown: unknownCandidate,
               code: selectedCode!,
-              responses: responses.take(keys[selectedCode]!.count).toList(),
+              responses: selectedResponses(keys[selectedCode]!),
             )
             .number,
       );
@@ -915,7 +910,7 @@ class _ScannedResultState extends State<ScannedResult> {
     return PopScope(
       canPop: !confirming,
       child: Scaffold(
-        appBar: AppBar(title: const Text('SiroMix')),
+        appBar: SiroAppBar(title: const Text('SiroMix')),
         bottomNavigationBar: AppBottomNavigation(
           selectedIndex: 3,
           onHome: confirming ? null : resultHome,
@@ -954,19 +949,9 @@ class _ScannedResultState extends State<ScannedResult> {
                         'Số báo danh cần kiểm tra. Đối chiếu ảnh và nhập đủ 6 chữ số.',
                         warning: true,
                       ),
-                    if (!widget.template.readsCandidate && !answersOnly)
+                    if (unknownCandidate)
                       secondary('Số báo danh: Không xác định'),
-                    if (answersOnly) ...[
-                      secondary('Số báo danh: Không xác định'),
-                      secondary('Mã đề đã chọn: ${widget.fixedCode}'),
-                      if (paperNumber == null)
-                        secondary('Số thứ tự bài được cấp khi xác nhận điểm.'),
-                      if (selectedCode == null)
-                        note(
-                          'Mã đề đã chọn không còn hợp lệ. Quay lại để chọn mã đề.',
-                          warning: true,
-                        ),
-                    ] else if (paperNumber == null) ...[
+                    if (paperNumber == null) ...[
                       ExpansionTile(
                         title: Text(
                           unknownCandidate
@@ -995,20 +980,22 @@ class _ScannedResultState extends State<ScannedResult> {
                         ],
                       ),
                       if (!unknownCandidate)
-                        TextFormField(
-                          controller: candidate,
-                          keyboardType: TextInputType.number,
-                          maxLength: 6,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          decoration: const InputDecoration(
-                            labelText: 'Số báo danh',
+                        SiroInput(
+                          child: TextFormField(
+                            controller: candidate,
+                            keyboardType: TextInputType.number,
+                            maxLength: 6,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            decoration: const InputDecoration(
+                              labelText: 'Số báo danh',
+                            ),
+                            validator: (v) =>
+                                v != null && RegExp(r'^\d{6}$').hasMatch(v)
+                                ? null
+                                : 'Nhập đủ 6 chữ số theo phiếu.',
                           ),
-                          validator: (v) =>
-                              v != null && RegExp(r'^\d{6}$').hasMatch(v)
-                              ? null
-                              : 'Nhập đủ 6 chữ số theo phiếu.',
                         ),
                       if (!widget.read.codeClear ||
                           !keys.containsKey(widget.read.codeText))
@@ -1016,26 +1003,33 @@ class _ScannedResultState extends State<ScannedResult> {
                           'Mã đề đọc được: ${widget.read.codeText}. Chọn bộ đáp án đúng trước khi xác nhận.',
                           warning: true,
                         ),
-                      DropdownButtonFormField<String>(
-                        initialValue: selectedCode,
-                        isExpanded: true,
-                        decoration: const InputDecoration(labelText: 'Mã đề'),
-                        items: keys.keys
-                            .map(
-                              (c) => DropdownMenuItem(value: c, child: Text(c)),
-                            )
-                            .toList(),
-                        onChanged: confirming
-                            ? null
-                            : (c) => setState(() => selectedCode = c),
-                        validator: (v) =>
-                            v == null ? 'Chọn mã đề có đủ đáp án.' : null,
+                      SiroInput(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: selectedCode,
+                          isExpanded: true,
+                          decoration: const InputDecoration(labelText: 'Mã đề'),
+                          items: keys.keys
+                              .map(
+                                (c) =>
+                                    DropdownMenuItem(value: c, child: Text(c)),
+                              )
+                              .toList(),
+                          onChanged: confirming
+                              ? null
+                              : (c) => setState(() => selectedCode = c),
+                          validator: (v) =>
+                              v == null ? 'Chọn mã đề có đủ đáp án.' : null,
+                        ),
                       ),
                     ] else
                       secondary(
                         'SBD ${unknownCandidate ? 'Không xác định' : candidate.text} · Mã đề $selectedCode',
                       ),
                     if (graded != null) ...[
+                      if (graded.key.isQm)
+                        secondary(
+                          'Chỉ chấm các phần đang bật và số câu đã cấu hình.',
+                        ),
                       if (widget.template == SheetTemplate.compact)
                         secondary(
                           'Chấm ${graded.key.count}/40 câu theo cấu hình đề. Các câu ngoài phạm vi được bỏ qua.',
@@ -1069,7 +1063,7 @@ class _ScannedResultState extends State<ScannedResult> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '${graded.correct} / ${graded.key.count} câu đúng',
+                              '${graded.correct} / ${graded.key.questionCount} câu đúng',
                               style: const TextStyle(color: teal),
                             ),
                           ],
@@ -1082,6 +1076,8 @@ class _ScannedResultState extends State<ScannedResult> {
                           for (final e in {
                             'Đúng': graded.correct,
                             'Sai': graded.wrong,
+                            if (graded.key.isQm)
+                              'Đúng một phần': graded.partial,
                             'Không hợp lệ / trống': graded.invalid,
                             'Cần kiểm tra': graded.pending,
                           }.entries)
@@ -1104,7 +1100,7 @@ class _ScannedResultState extends State<ScannedResult> {
                         'Đáp án đọc được',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      for (var i = 0; i < graded.key.count; i++)
+                      for (final i in indices(graded.key))
                         answerRow(i, graded.key),
                       if (error != null) note(error!, warning: true),
                       if (paperNumber == null)
@@ -1118,13 +1114,6 @@ class _ScannedResultState extends State<ScannedResult> {
                         'Chọn mã đề có đủ đáp án để tính điểm.',
                         warning: true,
                       ),
-                    if (answersOnly && paperNumber == null)
-                      action(
-                        'Chụp lại đáp án',
-                        confirming ? null : () => Navigator.pop(context, false),
-                        outline: true,
-                        icon: Icons.refresh,
-                      ),
                     action(
                       'Quét bài tiếp theo',
                       confirming || paperNumber == null
@@ -1133,6 +1122,10 @@ class _ScannedResultState extends State<ScannedResult> {
                       outline: true,
                       icon: Icons.document_scanner_outlined,
                     ),
+                    if (widget.template == SheetTemplate.qm2025)
+                      note(
+                        'Phần II: ý bỏ trống hoặc tô cả Đúng và Sai không được tính là ý đúng. Điểm câu được tính theo số ý đúng.',
+                      ),
                     note(
                       'Bỏ trống: 0 điểm\nTô nhiều đáp án: 0 điểm\nTô mờ / tẩy chưa sạch: kiểm tra thủ công',
                     ),

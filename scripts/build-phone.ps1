@@ -1,4 +1,4 @@
-param([ValidateRange(1,2147483647)][int]$BuildNumber = 22)
+param([ValidateRange(1,2147483647)][int]$BuildNumber = 28)
 $ErrorActionPreference = 'Stop'
 $repoDir = Split-Path -Parent $PSScriptRoot
 $flutterCommand = Get-Command flutter -ErrorAction SilentlyContinue

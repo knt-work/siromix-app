@@ -98,8 +98,8 @@ void main() {
           .toList();
       expect(sizes, everyElement(sizes.first));
       // Allow the wider test font to wrap labels to three lines.
-      expect(sizes.first.height, lessThanOrEqualTo(100));
-      expect(sizes.first.width, lessThanOrEqualTo(130));
+      expect(sizes.first.height, lessThanOrEqualTo(120));
+      expect(sizes.first.width, lessThanOrEqualTo(145));
       final colors = <Color?>[];
       for (final card in t.widgetList<HomeFunction>(
         find.byType(HomeFunction),

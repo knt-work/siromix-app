@@ -78,6 +78,7 @@ class _HistoryViewState extends State<HistoryView> {
             ),
             FilledButton(
               style: FilledButton.styleFrom(
+                foregroundColor: Colors.white,
                 backgroundColor: Colors.red.shade700,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -152,14 +153,16 @@ class _HistoryViewState extends State<HistoryView> {
                           ? 'Tất cả năm học'
                           : widget.path.join(' / '),
                     ),
-                    TextField(
-                      controller: search,
-                      enabled: !busy,
-                      decoration: const InputDecoration(
-                        labelText: 'Tìm SBD, mã đề hoặc số bài',
-                        prefixIcon: Icon(Icons.search),
+                    SiroInput(
+                      child: TextField(
+                        controller: search,
+                        enabled: !busy,
+                        decoration: const InputDecoration(
+                          labelText: 'Tìm SBD, mã đề hoặc số bài',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                        onChanged: (v) => setState(() => query = v.trim()),
                       ),
-                      onChanged: (v) => setState(() => query = v.trim()),
                     ),
                     const SizedBox(height: 10),
                     secondary('${papers.length} bài đã chấm'),
@@ -201,6 +204,7 @@ class _HistoryViewState extends State<HistoryView> {
                           FilledButton.icon(
                             key: const ValueKey('history-delete-selected'),
                             style: FilledButton.styleFrom(
+                              foregroundColor: Colors.white,
                               backgroundColor: Colors.red.shade700,
                             ),
                             onPressed: busy || selected.isEmpty
@@ -323,7 +327,7 @@ class PaperDetail extends StatelessWidget {
   final SavedPaper paper;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Chi tiết bài chấm')),
+    appBar: SiroAppBar(title: const Text('Chi tiết bài chấm')),
     body: Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 560),
@@ -335,21 +339,19 @@ class PaperDetail extends StatelessWidget {
             Text('SBD ${paper.candidateLabel} · Mã đề ${paper.code}'),
             secondary(paperTime(paper.createdAt)),
             note(
-              'Tổng điểm: ${score(paper.grade.score)} / ${score(paper.key.total)}\n${paper.grade.correct} / ${paper.key.count} câu đúng',
+              'Tổng điểm: ${score(paper.grade.score)} / ${score(paper.key.total)}\n${paper.grade.correct} / ${paper.key.questionCount} câu đúng',
               icon: Icons.fact_check_outlined,
             ),
-            for (var i = 0; i < paper.key.count; i++) savedRow(i),
+            for (var i = 0; i < paper.key.questionCount; i++) savedRow(i),
           ],
         ),
       ),
     ),
   );
   Widget savedRow(int i) {
-    final r = paper.responses[i],
-        correct =
-            r.state == MarkState.single && r.answer == paper.key.answers[i];
+    final r = paper.responses[i], correct = paper.grade.matches(i);
     final chosen = switch (r.state) {
-      MarkState.single => 'Chọn ${r.answer}',
+      MarkState.single => 'Chọn ${paper.key.displayAnswer(i, r.answer)}',
       MarkState.blank => 'Bỏ trống',
       MarkState.multiple => 'Nhiều đáp án',
       MarkState.uncertain => 'Cần kiểm tra',
@@ -358,14 +360,19 @@ class PaperDetail extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: correct ? const Color(0xffe7f5e9) : const Color(0xffffebee),
+        boxShadow: surfaceShadows,
         borderRadius: BorderRadius.circular(14),
       ),
       child: ListTile(
-        title: Text('Câu ${i + 1} - $chosen'),
+        title: Text('${paper.key.questionLabel(i)} - $chosen'),
         subtitle: Text(
-          'Đáp án đúng: ${paper.key.answers[i]} · ${correct ? 'Đúng' : 'Sai'}',
+          'Đáp án đúng: ${paper.key.displayAnswer(i, paper.key.expected(i))} · ${paper.key.kind(i) == QuestionKind.trueFalse
+              ? 'Đúng ${paper.grade.correctIdeas(i)}/4 ý'
+              : correct
+              ? 'Đúng'
+              : 'Sai'}',
         ),
-        trailing: Text('${score(correct ? paper.key.points[i] : 0)} đ'),
+        trailing: Text('${score(paper.grade.earned(i))} đ'),
       ),
     );
   }

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'templates.dart';
+import 'multipart.dart';
+export 'multipart.dart';
 
 import 'package:flutter/services.dart';
 
@@ -23,19 +25,79 @@ class AndroidStorage implements LocalStorage {
 class ExamKey {
   ExamKey({
     int? count,
-    this.templateId = 'abcd-10-a4-tn-tl',
+    this.templateId = 'abcd-40-compact',
     this.templateVersion = 1,
     this.common = 0.25,
     List<String>? answers,
     List<double>? points,
-  }) : count =
+    QmParts? parts,
+  }) : parts = parts ?? QmParts(),
+       count =
            count ?? SheetTemplate.find(templateId, templateVersion).capacity,
        answers =
            answers ??
-           List.filled(templateId == SheetTemplate.compact.id ? 40 : 30, ''),
+           List.filled(
+             [
+                   SheetTemplate.compact.id,
+                   SheetTemplate.qm2025.id,
+                 ].contains(templateId)
+                 ? 40
+                 : 30,
+             '',
+           ),
        points =
            points ??
-           List.filled(templateId == SheetTemplate.compact.id ? 40 : 30, 0.25);
+           List.filled(
+             [
+                   SheetTemplate.compact.id,
+                   SheetTemplate.qm2025.id,
+                 ].contains(templateId)
+                 ? 40
+                 : 30,
+             0.25,
+           );
+  final QmParts parts;
+  bool get isQm => templateId == SheetTemplate.qm2025.id;
+  int get questionCount =>
+      count +
+      (isQm && parts.twoEnabled ? parts.twoCount : 0) +
+      (isQm && parts.threeEnabled ? parts.threeCount : 0);
+  List<int> get scanIndices => [
+    for (var i = 0; i < count; i++) i,
+    if (isQm && parts.twoEnabled)
+      for (var i = 0; i < parts.twoCount; i++) 40 + i,
+    if (isQm && parts.threeEnabled)
+      for (var i = 0; i < parts.threeCount; i++) 48 + i,
+  ];
+  QuestionKind kind(int i) => i < count
+      ? QuestionKind.choice
+      : i < count + (parts.twoEnabled ? parts.twoCount : 0)
+      ? QuestionKind.trueFalse
+      : QuestionKind.number;
+  int partIndex(int i) => kind(i) == QuestionKind.choice
+      ? i
+      : kind(i) == QuestionKind.trueFalse
+      ? i - count
+      : i - count - (parts.twoEnabled ? parts.twoCount : 0);
+  String questionLabel(int i) => isQm
+      ? "Phần ${switch (kind(i)) {
+          QuestionKind.choice => 'I',
+          QuestionKind.trueFalse => 'II',
+          QuestionKind.number => 'III',
+        }} · Câu ${partIndex(i) + 1}"
+      : 'Câu ${i + 1}';
+  String expected(int i) => switch (kind(i)) {
+    QuestionKind.choice => answers[i],
+    QuestionKind.trueFalse => parts.twoAnswers[partIndex(i)],
+    QuestionKind.number => parts.threeAnswers[partIndex(i)],
+  };
+  String displayAnswer(int i, String value) =>
+      kind(i) == QuestionKind.trueFalse ? trueFalseText(value) : value;
+  double maximum(int i) => switch (kind(i)) {
+    QuestionKind.choice => points[i],
+    QuestionKind.trueFalse => parts.rates[4],
+    QuestionKind.number => parts.threePoints[partIndex(i)],
+  };
   int count;
   String templateId;
   int templateVersion;
@@ -44,8 +106,11 @@ class ExamKey {
   final List<String> answers;
   final List<double> points;
   bool get complete =>
-      answers.take(count).every((a) => 'ABCD'.split('').contains(a));
-  double get total => points.take(count).fold(0, (a, b) => a + b);
+      answers.take(count).every((a) => 'ABCD'.split('').contains(a)) &&
+      (!isQm || parts.complete);
+  double get total =>
+      points.take(count).fold<double>(0, (a, b) => a + b) +
+      (isQm ? parts.total : 0);
   ExamKey copy() => ExamKey(
     count: count,
     templateId: templateId,
@@ -53,6 +118,7 @@ class ExamKey {
     common: common,
     answers: List.of(answers),
     points: List.of(points),
+    parts: parts.copy(),
   );
   Map<String, dynamic> toJson() => {
     'count': count,
@@ -61,6 +127,7 @@ class ExamKey {
     'common': common,
     'answers': answers,
     'points': points,
+    'parts': parts.toJson(),
   };
   factory ExamKey.fromJson(Map<String, dynamic> j) {
     final count = j['count'] as int;
@@ -90,6 +157,9 @@ class ExamKey {
       common: common,
       answers: answers,
       points: points,
+      parts: j['parts'] == null
+          ? QmParts()
+          : QmParts.fromJson(j['parts'] as Map<String, dynamic>),
     );
   }
 }
@@ -110,7 +180,8 @@ class ExamData {
             : !RegExp(r'^\d{6}$').hasMatch(candidate)) ||
         key == null ||
         !key.complete ||
-        responses.length != key.count ||
+        (key.isQm && candidateUnknown == key.parts.scanCandidate) ||
+        responses.length != key.questionCount ||
         !GradeResult(key, responses).canConfirm) {
       throw const FormatException('Unconfirmed paper');
     }
@@ -219,7 +290,7 @@ class ExamData {
   }
 
   String encode() => jsonEncode({
-    'version': 5,
+    'version': 7,
     'profile': profile.toJson(),
     'papers': papers.map((p) => p.toJson()).toList(),
     'counters': counters,
@@ -237,7 +308,7 @@ class ExamData {
   ExamData._();
   factory ExamData.decode(String raw) {
     final j = jsonDecode(raw) as Map<String, dynamic>;
-    if (![1, 2, 3, 4, 5].contains(j['version'])) {
+    if (![1, 2, 3, 4, 5, 6, 7].contains(j['version'])) {
       throw const FormatException('Unsupported data version');
     }
     final d = ExamData._();
@@ -281,7 +352,7 @@ class ExamData {
       for (final value in j['papers'] as List) {
         final paper = SavedPaper.fromJson(
           value as Map<String, dynamic>,
-          allowUnknownCandidate: j['version'] == 5,
+          allowUnknownCandidate: (j['version'] as int) >= 5,
         );
         if (paper.ownerId != d.profile.id ||
             !ids.add(paper.id) ||
@@ -304,7 +375,7 @@ class ExamRepository {
     final raw = await storage.read();
     final decoded = raw == null ? ExamData.empty() : ExamData.decode(raw);
     // Persist the local profile identity once, including on an empty install.
-    if (raw == null || (jsonDecode(raw) as Map)['version'] != 5) {
+    if (raw == null || (jsonDecode(raw) as Map)['version'] != 7) {
       await storage.write(decoded.encode());
     }
     data = decoded;
@@ -354,30 +425,70 @@ class GradeResult {
   final List<ResponseMark> responses;
   int get pending =>
       responses.where((r) => r.state == MarkState.uncertain).length;
-  int get correct => List.generate(key.count, (i) => i)
+  bool matches(int i) {
+    if (responses[i].state != MarkState.single) return false;
+    return key.kind(i) == QuestionKind.number
+        ? normalizedNumber(responses[i].answer) != null &&
+              normalizedNumber(responses[i].answer) ==
+                  normalizedNumber(key.expected(i))
+        : responses[i].answer == key.expected(i);
+  }
+
+  int correctIdeas(int i) => List.generate(4, (n) => n)
+      .where(
+        (n) =>
+            responses[i].answer.length == 4 &&
+            responses[i].answer[n] == key.expected(i)[n],
+      )
+      .length;
+  int get correct =>
+      List.generate(key.questionCount, (i) => i).where(matches).length;
+  int get partial => List.generate(key.questionCount, (i) => i)
       .where(
         (i) =>
+            key.kind(i) == QuestionKind.trueFalse &&
             responses[i].state == MarkState.single &&
-            responses[i].answer == key.answers[i],
+            correctIdeas(i) > 0 &&
+            !matches(i),
       )
       .length;
   int get wrong =>
-      responses.where((r) => r.state == MarkState.single).length - correct;
+      responses.where((r) => r.state == MarkState.single).length -
+      correct -
+      partial;
   int get invalid => responses
       .where((r) => [MarkState.blank, MarkState.multiple].contains(r.state))
       .length;
-  double get score {
-    double total = 0;
-    for (var i = 0; i < key.count; i++) {
-      if (responses[i].state == MarkState.single &&
-          responses[i].answer == key.answers[i]) {
-        total += key.points[i];
-      }
+  double earned(int i) {
+    if (responses[i].state != MarkState.single) return 0;
+    if (key.kind(i) == QuestionKind.trueFalse) {
+      return key.parts.rates[correctIdeas(i)];
     }
-    return total;
+    return matches(i) ? key.maximum(i) : 0;
   }
 
-  bool get canConfirm => pending == 0;
+  double get score =>
+      List.generate(key.questionCount, earned).fold(0, (a, b) => a + b);
+
+  bool get canConfirm =>
+      responses.length == key.questionCount &&
+      pending == 0 &&
+      List.generate(
+        responses.length,
+        (i) => validResponse(key, i, responses[i]),
+      ).every((v) => v);
+}
+
+bool validResponse(ExamKey key, int index, ResponseMark mark) {
+  if (mark.state == MarkState.uncertain) return false;
+  if (mark.state != MarkState.single) return mark.answer.isEmpty;
+  return switch (key.kind(index)) {
+    QuestionKind.choice => ['A', 'B', 'C', 'D'].contains(mark.answer),
+    QuestionKind.trueFalse =>
+      RegExp(r'^[TF_X]{4}$').hasMatch(mark.answer) &&
+          mark.answer.contains(RegExp('[TF]')),
+    QuestionKind.number => fitsNumberGrid(mark.answer),
+  };
 }
 
 // Local IDs remain stable through backups. Future provider identities must be
@@ -509,14 +620,15 @@ class SavedPaper {
         r.code.isEmpty ||
         r.code.length > 20 ||
         !r.key.complete ||
-        r.responses.length != r.key.count ||
-        r.responses.any(
-          (a) =>
-              a.state == MarkState.uncertain ||
-              (a.state == MarkState.single
-                  ? !['A', 'B', 'C', 'D'].contains(a.answer)
-                  : a.answer.isNotEmpty),
-        )) {
+        (r.key.isQm &&
+            (r.key.parts.scanCandidate
+                ? !RegExp(r'^\d{6}$').hasMatch(r.candidate)
+                : r.candidate.isNotEmpty)) ||
+        r.responses.length != r.key.questionCount ||
+        List.generate(
+          r.responses.length,
+          (i) => i,
+        ).any((i) => !validResponse(r.key, i, r.responses[i]))) {
       throw const FormatException('Invalid saved paper');
     }
     return r;

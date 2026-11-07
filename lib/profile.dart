@@ -132,15 +132,17 @@ class _ProfilePageState extends State<ProfilePage> {
       key: ValueKey('profile-$label'),
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          enabled: onTap != null,
-          suffixIcon: const Icon(Icons.arrow_drop_down),
-        ),
-        child: Text(
-          value.isEmpty ? hint : value,
-          style: TextStyle(color: value.isEmpty ? muted : null),
+      child: SiroInput(
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: label,
+            enabled: onTap != null,
+            suffixIcon: const Icon(Icons.arrow_drop_down),
+          ),
+          child: Text(
+            value.isEmpty ? hint : value,
+            style: TextStyle(color: value.isEmpty ? muted : null),
+          ),
         ),
       ),
     ),
@@ -305,7 +307,7 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     },
     child: Scaffold(
-      appBar: AppBar(title: const Text('Hồ sơ & dữ liệu')),
+      appBar: SiroAppBar(title: const Text('Hồ sơ & dữ liệu')),
       bottomNavigationBar: AppBottomNavigation(
         selectedIndex: 0,
         onHome: busy ? null : profileHome,
@@ -320,19 +322,25 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.all(22),
               children: [
                 heading('Hồ sơ giáo viên'),
-                TextFormField(
-                  controller: name,
-                  enabled: !busy,
-                  maxLength: 100,
-                  decoration: const InputDecoration(labelText: 'Tên Hiển Thị'),
+                SiroInput(
+                  child: TextFormField(
+                    controller: name,
+                    enabled: !busy,
+                    maxLength: 100,
+                    decoration: const InputDecoration(
+                      labelText: 'Tên Hiển Thị',
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  key: const ValueKey('profile-unit'),
-                  controller: school,
-                  enabled: !busy,
-                  maxLength: 200,
-                  decoration: const InputDecoration(labelText: 'Đơn vị'),
+                SiroInput(
+                  child: TextFormField(
+                    key: const ValueKey('profile-unit'),
+                    controller: school,
+                    enabled: !busy,
+                    maxLength: 200,
+                    decoration: const InputDecoration(labelText: 'Đơn vị'),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 locationField(
@@ -356,19 +364,21 @@ class _ProfilePageState extends State<ProfilePage> {
                     onPressed: loadLocations,
                     child: Text(locationError!),
                   ),
-                TextFormField(
-                  controller: email,
-                  enabled: !busy,
-                  maxLength: 254,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                  validator: (v) =>
-                      v == null ||
-                          v.trim().isEmpty ||
-                          RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                              .hasMatch(v.trim())
-                      ? null
-                      : 'Nhập email hợp lệ.',
+                SiroInput(
+                  child: TextFormField(
+                    controller: email,
+                    enabled: !busy,
+                    maxLength: 254,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    validator: (v) =>
+                        v == null ||
+                            v.trim().isEmpty ||
+                            RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                                .hasMatch(v.trim())
+                        ? null
+                        : 'Nhập email hợp lệ.',
+                  ),
                 ),
                 action(
                   'Lưu hồ sơ',

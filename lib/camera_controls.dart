@@ -50,11 +50,12 @@ class CaptureOverlay extends StatelessWidget {
     required this.onTorch,
     required this.ready,
     this.onCapture,
-    this.guideAspect = 1067 / 1549,
+    this.guideAspect = 1082 / 1597,
+    this.guideFraction = .8,
     this.markerHints = const [],
   });
   final Widget preview;
-  final double imageAspect, guideAspect;
+  final double imageAspect, guideAspect, guideFraction;
   final List<Offset> markerHints;
   final GuideVerdict verdict;
   final bool processing, torchOn, ready;
@@ -95,6 +96,7 @@ class CaptureOverlay extends StatelessWidget {
               color,
               guideAspect,
               markerHints,
+              guideFraction,
             ),
           ),
         ),
@@ -202,8 +204,9 @@ class _GuidePainter extends CustomPainter {
     this.color,
     this.guideAspect,
     this.markerHints,
+    this.guideFraction,
   );
-  final double imageAspect, guideAspect;
+  final double imageAspect, guideAspect, guideFraction;
   final Color color;
   final List<Offset> markerHints;
   @override
@@ -212,6 +215,7 @@ class _GuidePainter extends CustomPainter {
       size,
       imageAspect,
       markerAspect: guideAspect,
+      guideFraction: guideFraction,
     ).target;
     final paint = Paint()
       ..color = color
@@ -239,6 +243,7 @@ class _GuidePainter extends CustomPainter {
       old.imageAspect != imageAspect ||
       old.color != color ||
       old.guideAspect != guideAspect ||
+      old.guideFraction != guideFraction ||
       old.markerHints != markerHints;
 }
 

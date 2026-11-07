@@ -113,10 +113,10 @@ void main() {
     expect(r.answers[6].state, MarkState.uncertain);
     expect(r.answers[3].state, MarkState.multiple);
   });
-  test('ten question sheet is rejected by compact reader', () {
+  test('QM sheet is rejected by NTL reader', () {
     expect(
       () => recognizeCompactSheet({
-        'photo': File('assets/templates/abcd-10-v1.png').readAsBytesSync(),
+        'photo': File('assets/templates/qm2025-a4-v1.png').readAsBytesSync(),
         'reference': reference,
       }),
       throwsA(isA<OmrException>()),
@@ -125,9 +125,9 @@ void main() {
   test(
     'compact key and history round trip without changing ten-question keys',
     () {
-      final old = ExamKey();
+      final old = ExamKey(templateId: SheetTemplate.retiredTen.id);
       expect(old.answers.length, 30);
-      expect(old.template, SheetTemplate.ten);
+      expect(old.template, SheetTemplate.retiredTen);
       final key = ExamKey(templateId: SheetTemplate.compact.id, count: 40);
       for (var i = 0; i < 40; i++) {
         key.answers[i] = 'A';
@@ -172,21 +172,14 @@ void main() {
       );
       await t.tap(find.text('Choose'));
       await t.pumpAndSettle();
-      expect(
-        t
-            .widget<OutlinedButton>(
-              find.byKey(const ValueKey('choose-answers')),
-            )
-            .onPressed,
-        isNull,
-      );
+      expect(find.byKey(const ValueKey('choose-answers')), findsNothing);
       expect(
         t
             .widget<OutlinedButton>(find.byKey(const ValueKey('choose-full')))
             .onPressed,
         isNotNull,
       );
-      expect(find.text('Không hỗ trợ với mẫu phiếu này.'), findsOneWidget);
+      expect(find.text('Chỉ quét đáp án'), findsNothing);
     },
   );
   testWidgets(
@@ -209,7 +202,7 @@ void main() {
           d.saveKey(path, code, k);
         }
         d.addCode(path, 'OLD');
-        final old = ExamKey(count: 1);
+        final old = ExamKey(templateId: SheetTemplate.retiredTen.id, count: 1);
         old.answers[0] = 'A';
         d.saveKey(path, 'OLD', old);
       });
@@ -321,7 +314,7 @@ void main() {
       t.view.devicePixelRatio = 1;
       addTearDown(t.view.resetPhysicalSize);
       addTearDown(t.view.resetDevicePixelRatio);
-      final old = ExamKey(count: 8);
+      final old = ExamKey(templateId: SheetTemplate.retiredTen.id, count: 8);
       for (var i = 0; i < 8; i++) {
         old.answers[i] = 'A';
       }
@@ -382,7 +375,7 @@ void main() {
       expect(saved!.answers.length, 40);
       expect(saved!.points[0], 2);
       expect(saved!.points[39], 3);
-      expect(old.template, SheetTemplate.ten);
+      expect(old.template, SheetTemplate.retiredTen);
       expect(old.answers.length, 30);
     },
   );

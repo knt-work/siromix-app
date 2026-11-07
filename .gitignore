@@ -52,3 +52,7 @@ app.*.map.json
 
 # Local user-supplied diagnostic photo; not authorized for publication.
 /test/fixtures/compact-209-real.png
+
+# Private QM camera calibration photographs.
+/test/fixtures/qm-real/
+/test/fixtures/ntl-damaged-local.png

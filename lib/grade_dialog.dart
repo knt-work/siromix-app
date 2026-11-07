@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'ui.dart';
+
 class GradeDialog extends StatefulWidget {
   const GradeDialog({super.key, required this.existing});
   final List<String> existing;
@@ -31,33 +33,38 @@ class _GradeDialogState extends State<GradeDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            DropdownButtonFormField<String>(
-              key: const ValueKey('grade-select'),
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Khối học'),
-              items: [
-                for (var i = 1; i <= 12; i++)
-                  DropdownMenuItem(value: '$i', child: Text('Khối $i')),
-                const DropdownMenuItem(
-                  value: 'custom',
-                  child: Text('Tùy chỉnh'),
-                ),
-              ],
-              onChanged: (value) => setState(() => selected = value),
-              validator: (value) => value == 'custom' ? null : validate(value),
+            SiroInput(
+              child: DropdownButtonFormField<String>(
+                key: const ValueKey('grade-select'),
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Khối học'),
+                items: [
+                  for (var i = 1; i <= 12; i++)
+                    DropdownMenuItem(value: '$i', child: Text('Khối $i')),
+                  const DropdownMenuItem(
+                    value: 'custom',
+                    child: Text('Tùy chỉnh'),
+                  ),
+                ],
+                onChanged: (value) => setState(() => selected = value),
+                validator: (value) =>
+                    value == 'custom' ? null : validate(value),
+              ),
             ),
             if (selected == 'custom')
               Padding(
                 padding: const EdgeInsets.only(top: 16),
-                child: TextFormField(
-                  key: const ValueKey('grade-custom'),
-                  controller: custom,
-                  maxLength: 60,
-                  decoration: const InputDecoration(
-                    labelText: 'Khối tùy chỉnh',
-                    hintText: 'Nhập tên khối',
+                child: SiroInput(
+                  child: TextFormField(
+                    key: const ValueKey('grade-custom'),
+                    controller: custom,
+                    maxLength: 60,
+                    decoration: const InputDecoration(
+                      labelText: 'Khối tùy chỉnh',
+                      hintText: 'Nhập tên khối',
+                    ),
+                    validator: validate,
                   ),
-                  validator: validate,
                 ),
               ),
           ],

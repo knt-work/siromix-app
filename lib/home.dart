@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'navigation.dart';
+import 'ui.dart';
 import 'administrative_units.dart' show administrativeSearch;
 
 class AppBuildInfo {
@@ -25,9 +26,9 @@ class AppBuildInfo {
   }
 }
 
-const homeInk = Color(0xff3d2d24),
-    homeMuted = Color(0xff766458),
-    homeOrange = Color(0xffd85c2b);
+const homeInk = Color(0xff252940),
+    homeMuted = Color(0xff747b91),
+    homeOrange = Color(0xfff4a357);
 const copyright = '© 2026 SiroMix. Bảo lưu mọi quyền.';
 
 String homeGreeting(DateTime time, String displayName) {
@@ -125,7 +126,7 @@ class _HomeLauncherState extends State<HomeLauncher>
         final name = administrativeSearch(entry.label);
         return terms.every(name.contains);
       }).toList();
-      final available = math.min(box.maxWidth, 420.0) * .84;
+      final available = math.min(box.maxWidth, 420.0) * .92;
       final width = (available - 12) / 2;
       final scaler = MediaQuery.textScalerOf(context);
       double textHeight(String label, TextStyle style, double maxWidth) {
@@ -153,13 +154,13 @@ class _HomeLauncherState extends State<HomeLauncher>
             math.max(1.0, width - 62),
           ) +
           6;
-      final headerHeight = math.max(28.0, badgeHeight);
-      var height = 88.0;
+      final headerHeight = math.max(36.0, badgeHeight);
+      var height = 106.0;
       // Measure every label, not just matches: filtering never resizes the cards.
       for (final entry in entries) {
         height = math.max(
           height,
-          18 +
+          24 +
               headerHeight +
               6 +
               textHeight(
@@ -169,7 +170,7 @@ class _HomeLauncherState extends State<HomeLauncher>
                   height: 1.3,
                   fontWeight: FontWeight.w600,
                 ),
-                width - 18,
+                width - 24,
               ),
         );
       }
@@ -226,119 +227,116 @@ class _HomeLauncherState extends State<HomeLauncher>
   Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
     value: const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Color(0xffefbea5),
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: appBackground,
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
     child: Scaffold(
-      backgroundColor: const Color(0xffffe6ca),
-      body: Stack(
-        children: [
-          const Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(painter: SunriseWallpaper()),
-            ),
-          ),
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(22, 25, 22, 12),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Align(
-                          alignment: Alignment.topCenter,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 516),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+      backgroundColor: appBackground,
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(gradient: brandGradient),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 560),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 17, 24, 42),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text.rich(
+                                      TextSpan(
                                         children: [
-                                          FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            alignment: Alignment.centerLeft,
-                                            child: Text.rich(
-                                              TextSpan(
-                                                children: [
-                                                  TextSpan(text: 'SiroMix'),
-                                                  TextSpan(
-                                                    text: '.',
-                                                    style: TextStyle(
-                                                      color: homeOrange,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              style: TextStyle(
-                                                color: homeInk,
-                                                fontSize: 33,
-                                                fontWeight: FontWeight.w700,
-                                                letterSpacing: -1.6,
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(height: 5),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.cloud_off_outlined,
-                                                size: 13,
-                                                color: homeMuted,
-                                              ),
-                                              SizedBox(width: 5),
-                                              Text(
-                                                'Offline',
-                                                style: TextStyle(
-                                                  color: homeMuted,
-                                                  fontSize: 11,
-                                                ),
-                                              ),
-                                            ],
+                                          TextSpan(text: 'SiroMix'),
+                                          TextSpan(
+                                            text: '.',
+                                            style: TextStyle(color: homeOrange),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    Material(
-                                      color: const Color(0xfffffdfa),
-                                      shape: const CircleBorder(),
-                                      child: IconButton(
-                                        tooltip: 'Hồ sơ & dữ liệu',
-                                        onPressed: widget.onProfile,
-                                        icon: const Icon(
-                                          Icons.person_outline,
-                                          color: homeInk,
-                                          size: 22,
-                                        ),
+                                      style: TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: -1,
                                       ),
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 24),
-                                Text(
-                                  homeGreeting(now, widget.displayName),
-                                  key: const ValueKey('home-greeting'),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: homeInk,
-                                    fontSize: 18,
-                                    height: 1.35,
-                                    fontWeight: FontWeight.w600,
                                   ),
-                                ),
-                                const SizedBox(height: 18),
-                                TextField(
+                                  Material(
+                                    color: const Color(0x25ffffff),
+                                    borderRadius: BorderRadius.circular(15),
+                                    child: IconButton(
+                                      tooltip: 'Hồ sơ & dữ liệu',
+                                      onPressed: widget.onProfile,
+                                      icon: const Icon(
+                                        Icons.person_outline,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 22),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      homeGreeting(now, widget.displayName),
+                                      key: const ValueKey('home-greeting'),
+                                      style: const TextStyle(
+                                        fontSize: 21,
+                                        height: 1.4,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: -.4,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const ExcludeSemantics(
+                                    child: HomeScanIllustration(),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Transform.translate(
+                  offset: const Offset(0, -23),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: appBackground,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(28),
+                      ),
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 560),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(22, 24, 22, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SiroInput(
+                                child: TextField(
                                   key: const ValueKey('home-search'),
                                   controller: functionSearch,
                                   textInputAction: TextInputAction.search,
@@ -370,70 +368,161 @@ class _HomeLauncherState extends State<HomeLauncher>
                                                 setState(functionSearch.clear),
                                           ),
                                     filled: true,
-                                    fillColor: const Color(0xfffffdfa),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 14,
+                                    fillColor: Colors.transparent,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide.none,
                                     ),
                                     enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      borderSide: const BorderSide(
-                                        color: Color(0xffd7b89e),
-                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide.none,
                                     ),
                                     focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      borderSide: const BorderSide(
-                                        color: homeOrange,
-                                        width: 1.5,
-                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide.none,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 20),
-                                const Text(
-                                  'Chức năng',
-                                  style: TextStyle(
-                                    color: homeMuted,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              ),
+                              const SizedBox(height: 25),
+                              const Text(
+                                'Chức năng',
+                                style: TextStyle(
+                                  color: homeInk,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                const SizedBox(height: 12),
-                                functionGrid(),
-                                const SizedBox(height: 28),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 17),
+                              functionGrid(),
+                            ],
                           ),
                         ),
-                        Column(
-                          children: [
-                            Text(
-                              info.label,
-                              key: const ValueKey('home-version'),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: homeMuted,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              copyright,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 11, color: homeMuted),
-                            ),
-                          ],
+                      ),
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 17),
+                    child: Column(
+                      children: [
+                        Text(
+                          info.label,
+                          key: const ValueKey('home-version'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: homeMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text(
+                          copyright,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 11, color: homeMuted),
                         ),
                       ],
                     ),
                   ),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Lightweight native illustration: crisp at every density, no network assets.
+class HomeScanIllustration extends StatelessWidget {
+  const HomeScanIllustration({super.key});
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 104,
+    height: 106,
+    child: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: 13,
+          top: 11,
+          child: Transform.rotate(
+            angle: .2,
+            child: Container(
+              width: 76,
+              height: 85,
+              decoration: BoxDecoration(
+                color: const Color(0xff9584db),
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x30202765),
+                    blurRadius: 15,
+                    offset: Offset(0, 8),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        Positioned(
+          left: 4,
+          top: 8,
+          child: Transform.rotate(
+            angle: -.17,
+            child: Container(
+              width: 76,
+              height: 85,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.white, Color(0xffd9e5ff)],
+                ),
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: const [
+                  BoxShadow(color: Color(0xffafbfed), offset: Offset(3, 4)),
+                ],
+              ),
+              child: const Icon(
+                Icons.fact_check_outlined,
+                color: Color(0xff6581c9),
+                size: 51,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Color(0xff9bf2cb), Color(0xff24b998)],
+              ),
+              boxShadow: [
+                BoxShadow(color: Color(0xff168b8d), offset: Offset(1, 3)),
+              ],
+            ),
+            child: const Icon(
+              Icons.check_rounded,
+              color: Colors.white,
+              size: 25,
+            ),
+          ),
+        ),
+        const Positioned(
+          right: 0,
+          top: 0,
+          child: Icon(Icons.auto_awesome, size: 20, color: Color(0xffffca7e)),
+        ),
+      ],
     ),
   );
 }
@@ -445,29 +534,29 @@ class HomeTileColors {
 
 const homeTilePalette = {
   'grading': HomeTileColors(
-    Color(0xffffb782),
-    Color(0xfffff1e6),
-    Color(0xff8a3518),
+    Color(0xfffefeff),
+    Color(0xffb9a3ff),
+    Color(0xff8c6cdb),
   ),
   'shuffle': HomeTileColors(
-    Color(0xffd9c4ee),
-    Color(0xfff3ecfa),
-    Color(0xff66457c),
+    Color(0xfff7f7fb),
+    Color(0xffd0d9f0),
+    Color(0xff9bafd1),
   ),
   'results': HomeTileColors(
-    Color(0xffa7d8ac),
-    Color(0xffeaf7ec),
-    Color(0xff285f35),
+    Color(0xfffcfffe),
+    Color(0xffa6dfd4),
+    Color(0xff51ae9b),
   ),
   'profile': HomeTileColors(
-    Color(0xff9ecbe4),
-    Color(0xffeaf5fc),
-    Color(0xff28566f),
+    Color(0xfffefdff),
+    Color(0xffc8b4ef),
+    Color(0xff9677cd),
   ),
   'about': HomeTileColors(
-    Color(0xfff5cf72),
-    Color(0xfffff6da),
-    Color(0xff765313),
+    Color(0xfffffefb),
+    Color(0xffffd49c),
+    Color(0xfff4ae69),
   ),
 };
 
@@ -499,24 +588,12 @@ class HomeFunction extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33804d38),
-                  blurRadius: 14,
-                  offset: Offset(0, 6),
-                ),
-                BoxShadow(
-                  color: Color(0x0f3d2d24),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
+              boxShadow: surfaceShadows,
             ),
             child: Material(
               color: palette.background,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: palette.accent.withValues(alpha: .25)),
               ),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
@@ -528,7 +605,7 @@ class HomeFunction extends StatelessWidget {
                         onTap!();
                       },
                 child: Padding(
-                  padding: const EdgeInsets.all(9),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -537,13 +614,27 @@ class HomeFunction extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            width: 28,
-                            height: 28,
+                            width: 36,
+                            height: 36,
                             decoration: BoxDecoration(
-                              color: palette.iconBackground,
-                              borderRadius: BorderRadius.circular(10),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  palette.iconBackground,
+                                  palette.accent,
+                                ],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: palette.accent.withValues(alpha: .3),
+                                  blurRadius: 8,
+                                  offset: const Offset(1, 4),
+                                ),
+                              ],
+                              borderRadius: BorderRadius.circular(11),
                             ),
-                            child: Icon(icon, size: 18, color: palette.accent),
+                            child: Icon(icon, size: 23, color: Colors.white),
                           ),
                           if (onTap == null) ...[
                             const SizedBox(width: 6),
@@ -592,116 +683,17 @@ class HomeFunction extends StatelessWidget {
   }
 }
 
-class SunriseWallpaper extends CustomPainter {
-  const SunriseWallpaper();
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xfffffcf3), Color(0xffffe6ca), Color(0xffe8a586)],
-          stops: [0, .42, 1],
-        ).createShader(rect),
-    );
-    final sun = Rect.fromCircle(
-      center: Offset(size.width * .94, size.height * .25),
-      radius: size.width * .3,
-    );
-    canvas.drawOval(
-      sun,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xfffff8db), Color(0xffffc68c)],
-        ).createShader(sun),
-    );
-    final a = Path()
-      ..moveTo(-size.width * .1, size.height * .47)
-      ..cubicTo(
-        size.width * .24,
-        size.height * .29,
-        size.width * .9,
-        size.height * .27,
-        size.width * 1.2,
-        size.height * .43,
-      )
-      ..lineTo(size.width * 1.2, size.height)
-      ..lineTo(-size.width * .1, size.height)
-      ..close();
-    canvas.drawPath(
-      a,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xfffff1d3), Color(0xfff0bba0), Color(0xffdf9b81)],
-        ).createShader(rect),
-    );
-    canvas.drawPath(
-      a,
-      Paint()
-        ..color = const Color(0x99fff5e7)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
-    );
-    final b = Path()
-      ..moveTo(0, size.height * .87)
-      ..cubicTo(
-        size.width * .48,
-        size.height * .89,
-        size.width * .55,
-        size.height * .59,
-        size.width,
-        size.height * .67,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-      b,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xffffdec1), Color(0xffefbea5)],
-        ).createShader(rect),
-    );
-    final contour = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = const Color(0x45fff9e2);
-    for (var i = 0; i < 4; i++) {
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(size.width * .03, size.height * .47),
-          width: size.width * (1.22 + i * .1),
-          height: size.height * (.8 + i * .05),
-        ),
-        contour,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant SunriseWallpaper oldDelegate) => false;
-}
-
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key, required this.info});
   final AppBuildInfo info;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Giới thiệu về ứng dụng')),
+    appBar: SiroAppBar(title: const Text('Giới thiệu về ứng dụng')),
     bottomNavigationBar: AppBottomNavigation(
       selectedIndex: 0,
       onHome: () => Navigator.of(context).popUntil((r) => r.isFirst),
     ),
-    backgroundColor: const Color(0xfffffcf3),
+    backgroundColor: appBackground,
     body: SafeArea(
       child: Center(
         child: ConstrainedBox(
@@ -715,10 +707,10 @@ class AboutPage extends StatelessWidget {
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xfffff8ed), Color(0xffffe6ca)],
+                    colors: [Color(0xfff6f4ff), Color(0xffe6ecfb)],
                   ),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xfff1dcc7)),
+                  boxShadow: surfaceShadows,
                 ),
                 child: Column(
                   children: [
@@ -744,7 +736,7 @@ class AboutPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         height: 1.5,
-                        color: homeOrange,
+                        color: teal,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -772,7 +764,7 @@ class AboutPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xfff1dcc7)),
+                  boxShadow: surfaceShadows,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

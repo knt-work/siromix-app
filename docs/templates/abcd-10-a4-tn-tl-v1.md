@@ -1,6 +1,6 @@
 # Answer-sheet type: A4 - 10 ABCD questions and written responses
 
-Status: source geometry calibrated against the supplied PDF render and implemented in the experimental OMR reader. Synthetic-image regression tests pass. **Accuracy on real phone captures has not been measured yet.**
+Status: RETIRED in build 26 (6 November 2026). This document and the archived source PDF are historical references only. The scanner, regional modes, app assets, related tools and recognition fixtures have been removed. A decode-only template identity preserves old keys/history/backups; it is not selectable for new work or camera-readable. Statements below describe the former implementation.
 
 ## Identity and source
 

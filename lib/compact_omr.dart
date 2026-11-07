@@ -89,18 +89,59 @@ class CompactSheetGeometry {
   ];
 }
 
+// Repair small gaps only in the image used to locate the printed squares.
+_Gray _compactMarkerImage(_Gray source) {
+  var pixels = Uint8List.fromList(source.pixels);
+  final width = source.width, height = source.height;
+  for (final dilate in [true, false]) {
+    for (final stride in [1, width]) {
+      final next = Uint8List.fromList(pixels);
+      for (var y = 2; y < height - 2; y++) {
+        for (var x = 2; x < width - 2; x++) {
+          final i = y * width + x;
+          var value = pixels[i];
+          for (var k = -2; k <= 2; k++) {
+            final neighbor = pixels[i + k * stride];
+            value = dilate
+                ? math.min(value, neighbor)
+                : math.max(value, neighbor);
+          }
+          next[i] = value;
+        }
+      }
+      pixels = next;
+    }
+  }
+  return _Gray(width, height, pixels);
+}
+
 _CompactAlignment _compactAlignment(
   _Gray gray, {
   int minimumSize = 9,
   double minimumArea = .16,
+  bool recovery = false,
 }) {
   final candidates = _markers(
     gray,
     minimumSize: minimumSize,
-    maximumCandidates: 40,
-    minimumFill: .70,
+    maximumCandidates: recovery ? 60 : 40,
+    minimumFill: recovery ? .48 : .70,
   );
   final cornerCandidates = candidates.take(10).toList();
+  if (recovery) {
+    final outer = <_Marker>{};
+    for (final sx in [-1, 1]) {
+      for (final sy in [-1, 1]) {
+        final ranked = [
+          ...candidates,
+        ]..sort((a, b) => (sx * b.x + sy * b.y).compareTo(sx * a.x + sy * a.y));
+        outer.addAll(ranked.take(3));
+      }
+    }
+    cornerCandidates
+      ..clear()
+      ..addAll(outer);
+  }
   _CompactAlignment? best;
   var bestCost = double.infinity;
   for (var a = 0; a < cornerCandidates.length - 3; a++) {
@@ -154,6 +195,7 @@ _CompactAlignment _compactAlignment(
               ...CompactSheetGeometry.corners,
             ];
             var cost = 0.0;
+            var matches = 0, insideMatches = 0;
             final cornerArea =
                 group.fold<double>(0, (sum, m) => sum + m.area) / 4;
             for (
@@ -170,8 +212,9 @@ _CompactAlignment _compactAlignment(
                 // Side markers share the corner size; internal squares are smaller.
                 final ratio = candidate.area / cornerArea;
                 if (index < 2
-                    ? ratio < .45 || ratio > 1.8
-                    : ratio < .15 || ratio > .9) {
+                    ? ratio < (recovery ? .27 : .45) || ratio > 1.8
+                    : ratio < (recovery ? .10 : .15) ||
+                          ratio > (recovery ? 1.1 : .9)) {
                   continue;
                 }
                 final rectified = _compactProject(
@@ -187,12 +230,21 @@ _CompactAlignment _compactAlignment(
                   distance = squared;
                 }
               }
-              if (nearest == null) break;
+              if (nearest == null) {
+                if (!recovery) break;
+                observed.add(expected);
+                cost += 32 * 32;
+                continue;
+              }
+              matches++;
+              if (index >= 2) insideMatches++;
               used.add(nearest);
               observed.add(located!);
               cost += distance;
             }
-            if (observed.length == 12 && cost < bestCost) {
+            if (observed.length == 12 &&
+                (!recovery || (matches >= 6 && insideMatches >= 4)) &&
+                cost < bestCost) {
               best = _CompactAlignment(h, observed);
               bestCost = cost;
             }
@@ -211,7 +263,19 @@ _CompactAlignment _compactAlignment(
 
 OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
   final source = _load(input['photo']!), reference = _load(input['reference']!);
-  final aligned = _compactWarp(source, _compactAlignment(source));
+  var recovered = false;
+  _CompactAlignment alignment;
+  try {
+    alignment = _compactAlignment(source);
+  } on OmrException {
+    alignment = _compactAlignment(
+      _compactMarkerImage(source),
+      minimumSize: 6,
+      recovery: true,
+    );
+    recovered = true;
+  }
+  final aligned = _compactWarp(source, alignment);
   final baseline = _compactWarp(reference, _compactAlignment(reference));
   ResponseMark read(List<math.Point<double>> points, List<String> labels) {
     try {
@@ -222,7 +286,39 @@ OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
                 _compactDensity(baseline, p.x, p.y),
           )
           .toList();
-      return _classify(differences, labels);
+      final mark = _classify(differences, labels);
+      if (recovered && mark.state == MarkState.single) {
+        final chosen = points[labels.indexOf(mark.answer)];
+        // A filled bubble should darken several parts of its core.
+        for (final offset in const [
+          math.Point(-4.0, 0.0),
+          math.Point(4.0, 0.0),
+          math.Point(0.0, -4.0),
+          math.Point(0.0, 4.0),
+        ]) {
+          final p = chosen + offset;
+          if (_density(
+                    aligned,
+                    p.x,
+                    p.y,
+                    coreRadius: 4,
+                    backgroundInner: 20,
+                    backgroundOuter: 23,
+                  ) -
+                  _density(
+                    baseline,
+                    p.x,
+                    p.y,
+                    coreRadius: 4,
+                    backgroundInner: 20,
+                    backgroundOuter: 23,
+                  ) <
+              .16) {
+            return const ResponseMark(MarkState.uncertain);
+          }
+        }
+      }
+      return mark;
     } on OmrException {
       // A shadow on an unused question must not block grading active questions.
       // Darkness on active rows remains uncertain and requires teacher review.

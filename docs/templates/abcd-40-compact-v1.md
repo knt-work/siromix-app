@@ -34,3 +34,8 @@ This requires distributed fill evidence rather than choosing the darkest number 
 The protected numeral footprint means very small/incomplete marks confined to that footprint cannot always be distinguished from printing. Teachers still need to verify uncertain readings; these fixtures do not establish broad print/device accuracy. The app stores no photos in history or backups.
 
 The user-supplied 209 photo is a local-only diagnostic fixture excluded by .gitignore; it is not published to GitHub. Its two real-photo tests skip automatically when that file is absent. Synthetic print-artifact and faint/multiple-mark tests remain fully reproducible from tracked assets.
+
+
+## NTL name and default status (build 26)
+
+The user-facing name is now exactly Phiếu chuẩn Trắc Nghiệm - Tự Luận - NTL. This is the default for new keys. The underlying abcd-40-compact v1 ID, coordinates, reader and scoring behavior are unchanged. Only full-frame capture is supported; the former ten-question/region reader has been removed.

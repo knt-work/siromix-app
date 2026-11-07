@@ -41,7 +41,8 @@ class CameraGuideLayout {
   CameraGuideLayout(
     Size size,
     double imageAspect, {
-    double markerAspect = 1067 / 1549,
+    double markerAspect = 1082 / 1597,
+    double guideFraction = .8,
   }) {
     var width = size.width, height = width / imageAspect;
     if (height > size.height) {
@@ -54,9 +55,9 @@ class CameraGuideLayout {
       width,
       height,
     );
-    var fw = width * .8, fh = fw / markerAspect;
-    if (fh > height * .8) {
-      fh = height * .8;
+    var fw = width * guideFraction, fh = fw / markerAspect;
+    if (fh > height * guideFraction) {
+      fh = height * guideFraction;
       fw = fh * markerAspect;
     }
     target = Rect.fromLTWH(
@@ -89,7 +90,7 @@ class CameraGuideLayout {
         preview.top + v * preview.height,
       );
     }).toList();
-    // Partial-region guide is a framing suggestion, not marker-sized targets.
+    // For dense full sheets, the guide is a positioning suggestion.
     // Accept a complete detected field anywhere inside the actual preview.
     final bounds = flexible
         ? preview.deflate(preview.shortestSide * .02)
@@ -105,10 +106,8 @@ class CameraGuideLayout {
     }
     final xs = points.map((p) => p.dx), ys = points.map((p) => p.dy);
     // Tiny distant sheets can lie inside the guide but lack useful detail.
-    return xs.reduce(math.max) - xs.reduce(math.min) >=
-            target.width * (flexible ? .45 : .65) &&
-        ys.reduce(math.max) - ys.reduce(math.min) >=
-            target.height * (flexible ? .45 : .65);
+    return xs.reduce(math.max) - xs.reduce(math.min) >= target.width * .65 &&
+        ys.reduce(math.max) - ys.reduce(math.min) >= target.height * .65;
   }
 }
 

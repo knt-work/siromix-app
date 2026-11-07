@@ -1,6 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+
+import 'ui.dart';
+
 import 'package:flutter/services.dart';
 
 class AdministrativeUnit {
@@ -150,14 +153,16 @@ class _AdministrativePickerState extends State<_AdministrativePicker> {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextField(
-                  key: const ValueKey('location-search'),
-                  decoration: const InputDecoration(
-                    hintText: 'Tìm theo tên hoặc mã',
-                    prefixIcon: Icon(Icons.search),
+                child: SiroInput(
+                  child: TextField(
+                    key: const ValueKey('location-search'),
+                    decoration: const InputDecoration(
+                      hintText: 'Tìm theo tên hoặc mã',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (text) =>
+                        setState(() => query = administrativeSearch(text)),
                   ),
-                  onChanged: (text) =>
-                      setState(() => query = administrativeSearch(text)),
                 ),
               ),
               Expanded(

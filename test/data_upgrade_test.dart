@@ -34,20 +34,17 @@ void main() {
       expect(ExamData.decode(d.encode()).codes(context)['132']!.count, 30);
     },
   );
-  test(
-    'new keys use ten-question template and reject out-of-capacity stored keys',
-    () {
-      final d = ExamData.empty();
-      d.addCode(context, '132');
-      final key = d.codes(context)['132']!;
-      expect(key.count, 10);
-      expect(key.template.readable, true);
-      final raw = key.toJson()..['count'] = 11;
-      expect(() => ExamKey.fromJson(raw), throwsFormatException);
-      final unknown = key.toJson()..['templateVersion'] = 999;
-      expect(() => ExamKey.fromJson(unknown), throwsFormatException);
-    },
-  );
+  test('new keys use NTL template and reject out-of-capacity stored keys', () {
+    final d = ExamData.empty();
+    d.addCode(context, '132');
+    final key = d.codes(context)['132']!;
+    expect(key.count, 40);
+    expect(key.template.readable, true);
+    final raw = key.toJson()..['count'] = 41;
+    expect(() => ExamKey.fromJson(raw), throwsFormatException);
+    final unknown = key.toJson()..['templateVersion'] = 999;
+    expect(() => ExamKey.fromJson(unknown), throwsFormatException);
+  });
   test(
     'paper numbers persist, isolate subjects, and serialize concurrent commits',
     () async {
@@ -82,4 +79,38 @@ void main() {
       expect(next, 5);
     },
   );
+  test('retired ten-question keys and historical snapshots stay readable without an active scanner', () {
+    final key = ExamKey(
+      templateId: 'abcd-10-a4-tn-tl',
+      count: 10,
+      answers: List.filled(30, 'A'),
+    );
+    final copy = ExamKey.fromJson(key.toJson());
+    expect(copy.template.readable, false);
+    expect(copy.count, 10);
+    expect(copy.answers.length, 30);
+    expect(copy.total, 2.5);
+    expect(SheetTemplate.supported.contains(copy.template), false);
+    final d = ExamData.empty();
+    d.addCode(context, '132');
+    d.saveKey(context, '132', copy);
+    d.confirmPaper(
+      path: context,
+      candidate: '001286',
+      code: '132',
+      responses: List.filled(10, const ResponseMark(MarkState.single, 'A')),
+    );
+    final reopened = ExamData.decode(d.encode());
+    expect(reopened.papers.single.grade.score, 2.5);
+    expect(reopened.papers.single.key.template.id, 'abcd-10-a4-tn-tl');
+    expect(reopened.papers.single.candidate, '001286');
+    expect(
+      BackupFile.decode(BackupFile(reopened).encode())
+          .data
+          .papers
+          .single
+          .number,
+      1,
+    );
+  });
 }

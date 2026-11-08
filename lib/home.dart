@@ -97,7 +97,7 @@ class _HomeLauncherState extends State<HomeLauncher>
 
   void about() => Navigator.push(
     context,
-    MaterialPageRoute<void>(builder: (_) => AboutPage(info: info)),
+    SlidePageRoute<void>(builder: (_) => AboutPage(info: info)),
   );
   Widget functionGrid() => LayoutBuilder(
     builder: (context, box) {

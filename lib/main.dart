@@ -265,7 +265,7 @@ class _AppHomeState extends State<AppHome> {
     selectedCode = code;
     final scanNext = await Navigator.push<bool>(
       context,
-      MaterialPageRoute<bool>(
+      SlidePageRoute<bool>(
         builder: (_) => KeyEditor(
           contextPath: contextPath,
           code: code,
@@ -295,7 +295,7 @@ class _AppHomeState extends State<AppHome> {
   Future<void> openProfile() async {
     final restored = await Navigator.push<bool>(
       context,
-      MaterialPageRoute<bool>(
+      SlidePageRoute<bool>(
         builder: (_) => ProfilePage(repository: repo, onHome: goHome),
       ),
     );
@@ -339,7 +339,18 @@ class _AppHomeState extends State<AppHome> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => InPlacePageSlide(
+    page: loading || failed || scanning
+        ? null
+        : launcher
+        ? 0
+        : history
+        ? 5
+        : path.length,
+    child: buildPage(),
+  );
+
+  Widget buildPage() {
     if (loading || failed) {
       return Scaffold(
         appBar: SiroAppBar(title: const Text('SiroMix')),
@@ -372,7 +383,7 @@ class _AppHomeState extends State<AppHome> {
         }),
         onHistory: () => Navigator.push(
           context,
-          MaterialPageRoute<void>(
+          SlidePageRoute<void>(
             builder: (_) => Scaffold(
               appBar: SiroAppBar(
                 title: const Column(

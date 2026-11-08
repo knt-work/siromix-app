@@ -160,7 +160,20 @@ void main() {
       await t.pumpAndSettle();
       expect(t.takeException(), isNull);
       await t.tap(about);
+      final aboutPage = find.byType(AboutPage);
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 150));
+      expect(t.getTopLeft(aboutPage).dx, closeTo(160, 1));
+      final background = Theme.of(t.element(aboutPage)).scaffoldBackgroundColor;
+      final backdrop = find.ancestor(
+        of: aboutPage,
+        matching: find.byWidgetPredicate(
+          (widget) => widget is ColoredBox && widget.color == background,
+        ),
+      );
+      expect(t.getRect(backdrop), const Rect.fromLTWH(0, 0, 320, 640));
       await t.pumpAndSettle();
+      expect(t.getTopLeft(aboutPage).dx, closeTo(0, 1));
       expect(find.text('Giới thiệu về ứng dụng'), findsOneWidget);
       expect(
         find.text('Thêm thời gian cho việc dạy, bớt thời gian cho việc chấm.'),
@@ -186,6 +199,13 @@ void main() {
       expect(find.text('Liên hệ qua Zalo/SĐT: 0358974020'), findsOneWidget);
       expect(copiedText, '0358974020');
       expect(t.takeException(), isNull);
+      t.state<NavigatorState>(find.byType(Navigator)).pop();
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 150));
+      expect(t.getTopLeft(aboutPage).dx, closeTo(160, 1));
+      expect(t.getRect(backdrop), const Rect.fromLTWH(0, 0, 320, 640));
+      await t.pumpAndSettle();
+      expect(aboutPage, findsNothing);
     },
   );
   testWidgets(

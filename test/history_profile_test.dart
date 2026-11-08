@@ -199,10 +199,17 @@ void main() {
     await t.tap(find.text('Sổ chấm bài'));
     await t.pumpAndSettle();
     expect(find.text('Bài số 1 · SBD 001286'), findsNothing);
-    for (final label in [...path.take(2), 'Khối 6', 'Toán', 'Mã đề 132']) {
+    for (final label in [...path.take(2), 'Khối 6', 'Toán']) {
       await t.tap(find.widgetWithText(ListTile, label));
       await t.pumpAndSettle();
     }
+    await t.tap(find.widgetWithText(ListTile, 'Mã đề 132'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 150));
+    final paperCount = find.text('2 bài đã chấm');
+    final enteringX = t.getTopLeft(paperCount).dx;
+    await t.pumpAndSettle();
+    expect(enteringX - t.getTopLeft(paperCount).dx, closeTo(280, 1));
     expect(find.byType(TextField), findsNothing);
     expect(find.text('2 bài đã chấm'), findsOneWidget);
     expect(find.textContaining('009999'), findsNothing);
@@ -212,8 +219,12 @@ void main() {
       lessThan(t.getTopLeft(find.text('Bài số 1 · SBD 001286')).dy),
     );
     await t.pageBack();
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 150));
+    final otherCodeTile = find.widgetWithText(ListTile, 'Mã đề 133');
+    final returningX = t.getTopLeft(otherCodeTile).dx;
     await t.pumpAndSettle();
-    expect(find.widgetWithText(ListTile, 'Mã đề 133'), findsOneWidget);
+    expect(t.getTopLeft(otherCodeTile).dx - returningX, closeTo(280, 1));
     await t.tap(find.widgetWithText(ListTile, 'Mã đề 132'));
     await t.pumpAndSettle();
     await t.tap(find.text('Bài số 2 · SBD 008888'));

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'data.dart';
+import 'navigation.dart';
 import 'ui.dart';
 
 String paperTime(DateTime value) {
@@ -362,7 +363,7 @@ class _HistoryViewState extends State<HistoryView> {
                               ? () => toggle(p)
                               : () => Navigator.push(
                                   context,
-                                  MaterialPageRoute<void>(
+                                  SlidePageRoute<void>(
                                     builder: (_) => PaperDetail(paper: p),
                                   ),
                                 ),
@@ -379,7 +380,7 @@ class _HistoryViewState extends State<HistoryView> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && widget.path.isEmpty && drillDown.isNotEmpty) goUp();
       },
-      child: content,
+      child: InPlacePageSlide(page: drillDown.length, child: content),
     );
   }
 }

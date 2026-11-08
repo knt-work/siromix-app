@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:siromix/data.dart';
 import 'package:siromix/main.dart';
+import 'package:siromix/ui.dart';
 
 class MemoryStorage implements LocalStorage {
   String? value;
@@ -109,6 +110,17 @@ void main() {
       Brightness.light,
     );
     await tester.tap(find.text('Chấm bài trắc nghiệm'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+    final scaffold = find.byType(Scaffold);
+    expect(tester.getTopLeft(scaffold).dx, closeTo(180, 1));
+    final backdrop = find.ancestor(
+      of: scaffold,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is ColoredBox && widget.color == appBackground,
+      ),
+    );
+    expect(tester.getRect(backdrop), const Rect.fromLTWH(0, 0, 360, 800));
     await tester.pumpAndSettle();
     expect(find.text('Kì thi của bạn'), findsOneWidget);
     await tester.tap(find.text('Tạo kì thi'));
@@ -118,7 +130,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Khối học'), findsOneWidget);
 
-    await tester.pump(const Duration(seconds: 2));
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Quay lại'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(tester.getTopLeft(find.byType(Scaffold)).dx, closeTo(-180, 1));
+    await tester.pumpAndSettle();
+    expect(find.text('Chức năng'), findsOneWidget);
   });
   testWidgets('editor preserves points and answers across pages at 320px', (
     tester,

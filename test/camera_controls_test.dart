@@ -39,9 +39,17 @@ void main() {
       final f = find.text(text).last;
       await t.ensureVisible(f);
       await t.tap(f);
+      if (text != 'Quét bài') {
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 150));
+        expect(t.getTopLeft(find.byType(Scaffold)).dx, closeTo(160, 1));
+      }
       await t.pumpAndSettle();
     }
     await t.tap(find.byKey(const ValueKey('choose-full')));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 150));
+    expect(t.getTopLeft(find.byType(Scaffold)).dx, closeTo(0, 1));
     await t.pumpAndSettle();
     final left = find.byKey(const ValueKey('open-camera')),
         right = find.byKey(const ValueKey('edit-exam'));

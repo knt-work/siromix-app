@@ -271,42 +271,44 @@ void main() {
       );
     },
   );
-  test(
-    'compact live probe matches template and missing corner is rejected',
-    () {
-      final image = img.copyResize(img.decodePng(reference)!, height: 700);
-      final pixels = Uint8List(image.width * image.height);
-      for (var y = 0; y < image.height; y++) {
-        for (var x = 0; x < image.width; x++) {
-          pixels[y * image.width + x] = image.getPixel(x, y).luminance.round();
-        }
+  test('compact live probe matches and still recognition recovers a missing marker', () {
+    final image = img.copyResize(img.decodePng(reference)!, height: 700);
+    final pixels = Uint8List(image.width * image.height);
+    for (var y = 0; y < image.height; y++) {
+      for (var x = 0; x < image.width; x++) {
+        pixels[y * image.width + x] = image.getPixel(x, y).luminance.round();
       }
-      expect(
-        probeCompactSheet({
-          'width': image.width,
-          'height': image.height,
-          'pixels': pixels,
-        }).found,
-        true,
-      );
-      final clipped = img.decodePng(reference)!;
-      img.fillRect(
-        clipped,
-        x1: 0,
-        y1: 0,
-        x2: 65,
-        y2: 70,
-        color: img.ColorRgb8(255, 255, 255),
-      );
-      expect(
-        () => recognizeCompactSheet({
-          'photo': Uint8List.fromList(img.encodePng(clipped)),
-          'reference': reference,
-        }),
-        throwsA(isA<OmrException>()),
-      );
-    },
-  );
+    }
+    expect(
+      probeCompactSheet({
+        'width': image.width,
+        'height': image.height,
+        'pixels': pixels,
+      }).found,
+      true,
+    );
+    final clipped = img.decodePng(reference)!;
+    img.fillRect(
+      clipped,
+      x1: 0,
+      y1: 0,
+      x2: 65,
+      y2: 70,
+      color: img.ColorRgb8(255, 255, 255),
+    );
+    final recovered = recognizeCompactSheet({
+      'photo': Uint8List.fromList(img.encodePng(clipped)),
+      'reference': reference,
+    });
+    expect(recovered.codeClear, false);
+    expect(
+      recovered.answers.any(
+        (mark) =>
+            mark.state == MarkState.single || mark.state == MarkState.multiple,
+      ),
+      false,
+    );
+  });
   testWidgets(
     'editor switches ten to compact and supports question forty without losing old values',
     (t) async {

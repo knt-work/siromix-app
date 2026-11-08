@@ -263,26 +263,47 @@ _CompactAlignment _compactAlignment(
 
 OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
   final source = _load(input['photo']!), reference = _load(input['reference']!);
-  var recovered = false;
+  var recovered = false, usedBorder = false;
   _CompactAlignment alignment;
   try {
     alignment = _compactAlignment(source);
   } on OmrException {
-    alignment = _compactAlignment(
-      _compactMarkerImage(source),
-      minimumSize: 6,
-      recovery: true,
-    );
+    final markerImage = _compactMarkerImage(source);
+    try {
+      alignment = _compactAlignment(
+        markerImage,
+        minimumSize: 6,
+        recovery: true,
+      );
+    } on OmrException {
+      usedBorder = true;
+      alignment =
+          _compactBorderAlignment(source, markerImage) ??
+          (throw const OmrException(
+            'Chưa căn được khung NTL. Giữ rõ đường viền và vùng đáp án rồi chụp lại.',
+          ));
+    }
     recovered = true;
   }
   final aligned = _compactWarp(source, alignment);
   final baseline = _compactWarp(reference, _compactAlignment(reference));
-  ResponseMark read(List<math.Point<double>> points, List<String> labels) {
+  final blockOffsets = List.generate(
+    4,
+    (i) => usedBorder
+        ? _compactBorderBlockOffset(aligned, i * 10)
+        : const math.Point(0, 0),
+  );
+
+  ResponseMark read(
+    List<math.Point<double>> points,
+    List<String> labels,
+    math.Point<int> offset,
+  ) {
     try {
       final differences = points
           .map(
             (p) =>
-                _compactDensity(aligned, p.x, p.y) -
+                _compactDensity(aligned, p.x + offset.x, p.y + offset.y) -
                 _compactDensity(baseline, p.x, p.y),
           )
           .toList();
@@ -299,8 +320,8 @@ OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
           final p = chosen + offset;
           if (_density(
                     aligned,
-                    p.x,
-                    p.y,
+                    p.x + offset.x,
+                    p.y + offset.y,
                     coreRadius: 4,
                     backgroundInner: 20,
                     backgroundOuter: 23,
@@ -333,6 +354,7 @@ OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
           .map((x) => math.Point(x, CompactSheetGeometry.answerY(i)))
           .toList(),
       ['A', 'B', 'C', 'D'],
+      blockOffsets[i ~/ 10],
     ),
   );
   final code = _readCompactCode(aligned, baseline);
@@ -347,8 +369,12 @@ OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
       40,
       (i) => _png(
         aligned,
-        x: (CompactSheetGeometry.answerX(i).first - 35).round(),
-        y: (CompactSheetGeometry.answerY(i) - 23).round(),
+        x:
+            (CompactSheetGeometry.answerX(i).first - 35).round() +
+            blockOffsets[i ~/ 10].x,
+        y:
+            (CompactSheetGeometry.answerY(i) - 23).round() +
+            blockOffsets[i ~/ 10].y,
         width: 205,
         height: 46,
       ),

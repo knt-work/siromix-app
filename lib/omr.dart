@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 import 'data.dart';
 
 part 'compact_omr.dart';
+part 'compact_border.dart';
 part 'qm_omr.dart';
 
 class OmrException implements Exception {

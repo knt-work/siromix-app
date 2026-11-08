@@ -32,7 +32,7 @@ For a universal phone APK containing ARM64, ARMv7 and x86_64:
 powershell -ExecutionPolicy Bypass -File .\scripts\build-phone.ps1
 ```
 
-The script writes `dist/SiroMix-build-27-universal.apk`. Version is `1.0.0+27`: the user-visible version is 1.0.0, while Android build code 27 remains greater than earlier development builds. APKs, SDK caches, local Android configuration and signing keys are excluded from Git. The existing development signing configuration is retained; store publishing is a separate milestone.
+The script writes `dist/SiroMix-build-30-universal.apk`. Version is `1.0.0+30`: the user-visible version is 1.0.0, while Android build code 30 remains greater than earlier development builds. APKs, SDK caches, local Android configuration and signing keys are excluded from Git. The existing development signing configuration is retained; store publishing is a separate milestone.
 
 ## Scope and limitations
 
@@ -42,7 +42,7 @@ Question shuffling, Excel export, Google/Apple sign-in and cloud synchronization
 
 ## Documents
 
-- [Product specification](SPEC.md): latest sections supersede earlier prototype decisions.
+- [Product specification](SPEC.md): entry point for current feature specs and the branch workflow.
 - [Development checkpoints](docs/DEVELOPMENT.md): validation, environment and handoff notes.
 - [OMR milestone](docs/OMR-MILESTONE.md): reader architecture and phone test procedure.
 - [Administrative data provenance](docs/ADMINISTRATIVE-DATA.md): pinned offline address snapshot and licensing.

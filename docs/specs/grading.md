@@ -1,0 +1,7 @@
+# Exam configuration and grading
+
+- Scope keys by academic year, exam session, grade level, subject and exam code. Grade selection offers 1–12 and custom entry. Codes are user-defined within their subject context.
+- Require a complete key for grading. NTL supports 1–40 ABCD questions. QM requires Part I with 1–40 ABCD questions and offers optional Part II with 1–8 four-idea true/false questions and Part III with 1–6 numeric responses. QM answer entry is continuous.
+- Use finite, nonnegative points. Common points propagate to the relevant per-question inputs, which remain editable. Sum the configured maximum without scaling. QM Part II uses an editable nondecreasing table for 0–4 correct ideas, defaulting to 0, 0.1, 0.25, 0.5 and 1. A blank or multiple idea earns no credit for that idea. QM Part III accepts equivalent decimal forms within the printed four-column format.
+- Only enabled, configured questions affect scores and review. Clear correct selections earn the configured points. Wrong, blank or multiple ABCD responses earn zero. Uncertain active responses require teacher review. Show response crops and allow correction before confirmation.
+- Select an answer key automatically only for a clear code matching a complete key for the selected template and context. Ambiguous or unmatched codes require an explicit choice. A second scan of the same paper is treated as a separate paper.

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:siromix/data.dart';
 import 'package:siromix/history.dart';
+import 'package:siromix/main.dart';
 import 'package:siromix/profile.dart';
 
 import 'widget_test.dart' show MemoryStorage;
@@ -176,30 +177,71 @@ void main() {
       expect(r.data.papers.single.number, 1);
     },
   );
-  testWidgets('history filters by context and SBD and opens saved details', (
-    t,
-  ) async {
+  testWidgets('history drills down by code and opens saved details', (t) async {
     final r = await repository();
     await r.update(confirm);
     await r.update((d) => confirm(d, '008888'));
-    await t.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: HistoryView(repository: r, path: path),
-        ),
-      ),
-    );
+    await r.update((d) {
+      d.addCode(path, '133');
+      d.saveKey(path, '133', d.codes(path)['132']!);
+      d.confirmPaper(
+        path: path,
+        candidate: '009999',
+        code: '133',
+        responses: const [
+          ResponseMark(MarkState.single, 'A'),
+          ResponseMark(MarkState.blank),
+        ],
+      );
+    });
+    await t.pumpWidget(SiroMixApp(repository: r));
     await t.pumpAndSettle();
-    expect(find.text('2 bài đã chấm'), findsOneWidget);
-    await t.enterText(find.byType(TextField), '008888');
+    await t.tap(find.text('Sổ chấm bài'));
     await t.pumpAndSettle();
-    expect(find.text('1 bài đã chấm'), findsOneWidget);
     expect(find.text('Bài số 1 · SBD 001286'), findsNothing);
+    for (final label in [...path.take(2), 'Khối 6', 'Toán', 'Mã đề 132']) {
+      await t.tap(find.widgetWithText(ListTile, label));
+      await t.pumpAndSettle();
+    }
+    expect(find.byType(TextField), findsNothing);
+    expect(find.text('2 bài đã chấm'), findsOneWidget);
+    expect(find.textContaining('009999'), findsNothing);
+    expect(find.text('Bài số 1 · SBD 001286'), findsOneWidget);
+    expect(
+      t.getTopLeft(find.text('Bài số 2 · SBD 008888')).dy,
+      lessThan(t.getTopLeft(find.text('Bài số 1 · SBD 001286')).dy),
+    );
+    await t.pageBack();
+    await t.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, 'Mã đề 133'), findsOneWidget);
+    await t.tap(find.widgetWithText(ListTile, 'Mã đề 132'));
+    await t.pumpAndSettle();
     await t.tap(find.text('Bài số 2 · SBD 008888'));
     await t.pumpAndSettle();
     expect(find.text('Chi tiết bài chấm'), findsOneWidget);
     expect(find.text('Câu 1 - Chọn A'), findsOneWidget);
     expect(find.text('Đáp án đúng: A · Đúng'), findsOneWidget);
+    await t.pageBack();
+    await t.pumpAndSettle();
+    await t.binding.handlePopRoute();
+    await t.pumpAndSettle();
+    await t.tap(find.widgetWithText(ListTile, 'Mã đề 133'));
+    await t.pumpAndSettle();
+    final otherCode = r.data.papers.singleWhere((p) => p.code == '133');
+    await t.tap(find.byKey(ValueKey('paper-delete-${otherCode.id}')));
+    await t.pumpAndSettle();
+    await t.tap(find.widgetWithText(FilledButton, 'Xóa'));
+    await t.pumpAndSettle();
+    expect(
+      find.text('Chưa có bài chấm được lưu trong mục này.'),
+      findsOneWidget,
+    );
+    await t.binding.handlePopRoute();
+    await t.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, 'Mã đề 133'), findsNothing);
+    await t.tap(find.widgetWithText(TextButton, 'Năm học'));
+    await t.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, path.first), findsOneWidget);
   });
   testWidgets(
     'profile saves locally without changing identity; exports saved values',

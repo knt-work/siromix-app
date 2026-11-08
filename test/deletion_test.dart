@@ -249,7 +249,7 @@ void main() {
       addTearDown(t.view.resetPhysicalSize);
       addTearDown(t.view.resetDevicePixelRatio);
       final r = await seed(extra: true);
-      final path = [r.data.children([]).first, 'E-Delete', '6', 'Toán'];
+      final path = [r.data.children([]).first, 'E-Delete', '6', 'Toán', '132'];
       final target = r.data.papers.first;
       final counters = Map.of(r.data.counters);
       await t.pumpWidget(
@@ -279,14 +279,16 @@ void main() {
     },
   );
   testWidgets(
-    'filtered batch deletes exactly selected IDs across searches and cancellation preserves selection',
+    'batch deletes exactly the selected papers and cancellation preserves selection',
     (t) async {
       t.view.physicalSize = const Size(360, 1300);
       t.view.devicePixelRatio = 1;
       addTearDown(t.view.resetPhysicalSize);
       addTearDown(t.view.resetDevicePixelRatio);
       final r = await seed(extra: true);
-      final path = [r.data.children([]).first, 'E-Delete', '6', 'Toán'];
+      final path = [r.data.children([]).first, 'E-Delete', '6', 'Toán', '132'];
+      final known = r.data.papers.singleWhere((p) => p.candidate == '008888');
+      final unknown = r.data.papers.singleWhere((p) => p.candidate.isEmpty);
       await t.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -297,9 +299,7 @@ void main() {
       await t.pumpAndSettle();
       await t.tap(find.byKey(const ValueKey('history-select-mode')));
       await t.pumpAndSettle();
-      await t.enterText(find.byType(TextField), '008888');
-      await t.pumpAndSettle();
-      await t.tap(find.text('Chọn tất cả đang hiển thị'));
+      await t.tap(find.byKey(ValueKey('paper-select-${known.id}')));
       await t.pumpAndSettle();
       await t.tap(find.byKey(const ValueKey('history-delete-selected')));
       await t.pumpAndSettle();
@@ -307,9 +307,7 @@ void main() {
       await t.pumpAndSettle();
       expect(r.data.papers.length, 7);
       expect(find.text('Đã chọn 1 bài'), findsOneWidget);
-      await t.enterText(find.byType(TextField), 'không xác định');
-      await t.pumpAndSettle();
-      await t.tap(find.text('Chọn tất cả đang hiển thị'));
+      await t.tap(find.byKey(ValueKey('paper-select-${unknown.id}')));
       await t.pumpAndSettle();
       expect(find.text('Đã chọn 2 bài'), findsOneWidget);
       await t.tap(find.byKey(const ValueKey('history-delete-selected')));
@@ -332,7 +330,7 @@ void main() {
       addTearDown(t.view.resetPhysicalSize);
       addTearDown(t.view.resetDevicePixelRatio);
       final r = await seed(extra: true);
-      final path = [r.data.children([]).first, 'E-Delete', '6', 'Toán'];
+      final path = [r.data.children([]).first, 'E-Delete', '6', 'Toán', '132'];
       final before = r.data.encode();
       await t.pumpWidget(
         MaterialApp(
@@ -370,38 +368,35 @@ void main() {
       expect(t.takeException(), isNull);
     },
   );
-  testWidgets(
-    'changing history context clears old hidden selections and search',
-    (t) async {
-      final r = await seed(extra: true);
-      final year = r.data.children([]).first;
-      Widget screen(List<String> path) => MaterialApp(
-        home: Scaffold(
-          body: HistoryView(
-            key: const ValueKey('history'),
-            repository: r,
-            path: path,
-          ),
+  testWidgets('changing history context clears old selections and drill-down', (
+    t,
+  ) async {
+    final r = await seed(extra: true);
+    final year = r.data.children([]).first;
+    Widget screen(List<String> path) => MaterialApp(
+      home: Scaffold(
+        body: HistoryView(
+          key: const ValueKey('history'),
+          repository: r,
+          path: path,
         ),
-      );
-      await t.pumpWidget(screen([year, 'E-Delete', '6', 'Toán']));
-      await t.pumpAndSettle();
-      await t.tap(find.byKey(const ValueKey('history-select-mode')));
-      await t.pumpAndSettle();
-      await t.enterText(find.byType(TextField), '008888');
-      await t.pumpAndSettle();
-      await t.tap(find.text('Chọn tất cả đang hiển thị'));
-      await t.pumpAndSettle();
-      expect(find.text('Đã chọn 1 bài'), findsOneWidget);
-      await t.pumpWidget(screen([year, 'E-Delete', '6', 'Lý']));
-      await t.pumpAndSettle();
-      expect(t.widget<TextField>(find.byType(TextField)).controller!.text, '');
-      expect(
-        find.byKey(const ValueKey('history-delete-selected')),
-        findsNothing,
-      );
-      expect(find.text('1 bài đã chấm'), findsOneWidget);
-      expect(r.data.papers.length, 7);
-    },
-  );
+      ),
+    );
+    await t.pumpWidget(screen([year, 'E-Delete', '6', 'Toán']));
+    await t.pumpAndSettle();
+    await t.tap(find.widgetWithText(ListTile, 'Mã đề 132'));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const ValueKey('history-select-mode')));
+    await t.pumpAndSettle();
+    final known = r.data.papers.singleWhere((p) => p.candidate == '008888');
+    await t.tap(find.byKey(ValueKey('paper-select-${known.id}')));
+    await t.pumpAndSettle();
+    expect(find.text('Đã chọn 1 bài'), findsOneWidget);
+    await t.pumpWidget(screen([year, 'E-Delete', '6', 'Lý']));
+    await t.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, 'Mã đề 132'), findsOneWidget);
+    expect(find.byKey(const ValueKey('history-delete-selected')), findsNothing);
+    expect(find.text('1 bài đã chấm'), findsNWidgets(2));
+    expect(r.data.papers.length, 7);
+  });
 }

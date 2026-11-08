@@ -19,15 +19,10 @@ class HistoryView extends StatefulWidget {
 }
 
 class _HistoryViewState extends State<HistoryView> {
-  final search = TextEditingController();
-  String query = '';
+  static const levels = ['Năm học', 'Kì thi', 'Khối', 'Môn thi', 'Mã đề'];
+  List<String> drillDown = [];
   bool selecting = false, busy = false, writing = false;
   final selected = <String>{};
-  @override
-  void dispose() {
-    search.dispose();
-    super.dispose();
-  }
 
   @override
   void didUpdateWidget(covariant HistoryView oldWidget) {
@@ -36,10 +31,24 @@ class _HistoryViewState extends State<HistoryView> {
         oldWidget.repository != widget.repository) {
       selected.clear();
       selecting = false;
-      query = '';
-      search.clear();
+      drillDown = [];
     }
   }
+
+  void navigate(List<String> next) {
+    if (busy) return;
+    setState(() {
+      drillDown = next;
+      selected.clear();
+      selecting = false;
+    });
+  }
+
+  String pathLabel(int depth, String value) => switch (depth) {
+    2 => 'Khối $value',
+    4 => 'Mã đề $value',
+    _ => value,
+  };
 
   void toggle(SavedPaper paper) {
     if (busy) return;
@@ -118,53 +127,84 @@ class _HistoryViewState extends State<HistoryView> {
 
   @override
   Widget build(BuildContext context) {
-    final papers =
-        widget.repository.data.papers
-            .where(
-              (p) =>
-                  ExamData.pathStartsWith(p.path, widget.path) &&
-                  (query.isEmpty ||
-                      p.candidateLabel.toLowerCase().contains(
-                        query.toLowerCase(),
-                      ) ||
-                      p.code.contains(query) ||
-                      '${p.number}' == query),
-            )
-            .toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final path = [...widget.path, ...drillDown];
+    final depth = path.length;
+    final showPapers = depth == levels.length;
+    final subjectPath = path.take(4).toList();
+    final papers = widget.repository.data.papers.where((paper) {
+      return ExamData.pathStartsWith(paper.path, subjectPath) &&
+          (!showPapers || paper.code == path.last);
+    }).toList();
+    final groups = <String, int>{};
+    if (showPapers) {
+      papers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    } else {
+      for (final paper in papers) {
+        final name = depth == 4 ? paper.code : paper.path[depth];
+        groups.update(name, (count) => count + 1, ifAbsent: () => 1);
+      }
+    }
+    final names = groups.keys.toList()
+      ..sort((a, b) => depth == 0 ? b.compareTo(a) : a.compareTo(b));
     final allVisible =
         papers.isNotEmpty && papers.every((p) => selected.contains(p.id));
-    return LayoutBuilder(
+    void goUp() => navigate(drillDown.sublist(0, drillDown.length - 1));
+
+    final content = LayoutBuilder(
       builder: (context, constraints) => Column(
         children: [
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: constraints.maxHeight * .65),
             child: SingleChildScrollView(
-              key: const ValueKey('history-toolbar'),
+              key: ValueKey(('history-toolbar', depth)),
               primary: false,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(22, 16, 22, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    heading('Sổ chấm bài'),
-                    secondary(
-                      widget.path.isEmpty
-                          ? 'Tất cả năm học'
-                          : widget.path.join(' / '),
-                    ),
-                    SiroInput(
-                      child: TextField(
-                        controller: search,
-                        enabled: !busy,
-                        decoration: const InputDecoration(
-                          labelText: 'Tìm SBD, mã đề hoặc số bài',
-                          prefixIcon: Icon(Icons.search),
-                        ),
-                        onChanged: (v) => setState(() => query = v.trim()),
+                    if (widget.path.isNotEmpty) heading('Sổ chấm bài'),
+                    if (path.isNotEmpty)
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 4,
+                        children: [
+                          if (widget.path.isNotEmpty && drillDown.isNotEmpty)
+                            IconButton(
+                              tooltip: 'Quay lại cấp trước',
+                              onPressed: busy ? null : goUp,
+                              icon: const Icon(Icons.arrow_back),
+                            ),
+                          if (widget.path.isEmpty)
+                            TextButton(
+                              onPressed: busy ? null : () => navigate([]),
+                              child: const Text('Năm học'),
+                            ),
+                          for (var i = 0; i < depth; i++) ...[
+                            if (i > 0 || widget.path.isEmpty)
+                              const Icon(Icons.chevron_right, size: 16),
+                            if (i >= widget.path.length - 1 && i < depth - 1)
+                              TextButton(
+                                onPressed: busy
+                                    ? null
+                                    : () => navigate(
+                                        drillDown
+                                            .take(i + 1 - widget.path.length)
+                                            .toList(),
+                                      ),
+                                child: Text(pathLabel(i, path[i])),
+                              )
+                            else
+                              Text(pathLabel(i, path[i])),
+                          ],
+                        ],
                       ),
+                    Text(
+                      showPapers
+                          ? 'Bài đã chấm · ${pathLabel(4, path.last)}'
+                          : levels[depth],
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    const SizedBox(height: 10),
                     secondary('${papers.length} bài đã chấm'),
                     if (selecting) ...[
                       Text(
@@ -215,7 +255,7 @@ class _HistoryViewState extends State<HistoryView> {
                           ),
                         ],
                       ),
-                    ] else if (papers.isNotEmpty)
+                    ] else if (showPapers && papers.isNotEmpty)
                       Align(
                         alignment: Alignment.centerLeft,
                         child: TextButton.icon(
@@ -238,12 +278,29 @@ class _HistoryViewState extends State<HistoryView> {
                 ? Center(
                     child: Padding(
                       padding: const EdgeInsets.all(22),
-                      child: Text(
-                        query.isEmpty
-                            ? 'Chưa có bài chấm được lưu trong mục này.'
-                            : 'Không tìm thấy bài chấm.',
+                      child: const Text(
+                        'Chưa có bài chấm được lưu trong mục này.',
                       ),
                     ),
+                  )
+                : !showPapers
+                ? ListView.builder(
+                    key: ValueKey(('history-groups', depth)),
+                    padding: const EdgeInsets.fromLTRB(22, 0, 22, 22),
+                    itemCount: names.length,
+                    itemBuilder: (context, i) {
+                      final name = names[i];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: ListTile(
+                          leading: tileIcon(Icons.folder_outlined),
+                          title: Text(pathLabel(depth, name)),
+                          subtitle: Text('${groups[name]} bài đã chấm'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => navigate([...drillDown, name]),
+                        ),
+                      );
+                    },
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(22, 0, 22, 22),
@@ -268,9 +325,7 @@ class _HistoryViewState extends State<HistoryView> {
                           title: Text(
                             'Bài số ${p.number} · SBD ${p.candidateLabel}',
                           ),
-                          subtitle: Text(
-                            '${p.path.skip(1).join(' / ')}\nMã đề ${p.code} · ${paperTime(p.createdAt)}',
-                          ),
+                          subtitle: Text(paperTime(p.createdAt)),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -318,6 +373,13 @@ class _HistoryViewState extends State<HistoryView> {
           ),
         ],
       ),
+    );
+    return PopScope(
+      canPop: widget.path.isNotEmpty || (!busy && drillDown.isEmpty),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && widget.path.isEmpty && drillDown.isNotEmpty) goUp();
+      },
+      child: content,
     );
   }
 }

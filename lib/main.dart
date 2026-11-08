@@ -374,7 +374,16 @@ class _AppHomeState extends State<AppHome> {
           context,
           MaterialPageRoute<void>(
             builder: (_) => Scaffold(
-              appBar: SiroAppBar(title: const Text('SiroMix')),
+              appBar: SiroAppBar(
+                title: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('SiroMix', style: TextStyle(fontSize: 13)),
+                    Text('Sổ chấm bài'),
+                  ],
+                ),
+              ),
               bottomNavigationBar: AppBottomNavigation(
                 selectedIndex: 3,
                 onHome: goHome,

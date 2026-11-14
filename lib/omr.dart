@@ -22,6 +22,15 @@ class DigitReading {
   final MarkState state;
 }
 
+enum AnswerReviewReason { faint, competing, unevenFill, darkPaper }
+
+class AnswerReviewDetail {
+  const AnswerReviewDetail(this.reason, this.scores);
+
+  final AnswerReviewReason reason;
+  final List<double> scores;
+}
+
 class OmrRead {
   const OmrRead({
     required this.answers,
@@ -31,11 +40,13 @@ class OmrRead {
     required this.answerCrops,
     required this.candidateCrop,
     required this.codeCrop,
+    this.answerReviewDetails = const {},
   });
   final List<ResponseMark> answers;
   final List<DigitReading> candidate, code;
   final Uint8List aligned, candidateCrop, codeCrop;
   final List<Uint8List> answerCrops;
+  final Map<int, AnswerReviewDetail> answerReviewDetails;
   String get candidateText => candidate.map((v) => v.value).join();
   String get codeText => code.map((v) => v.value).join();
   bool get candidateClear =>
@@ -75,6 +86,58 @@ class _Marker {
   _Marker(this.x, this.y, this.area);
   final double x, y;
   final int area;
+}
+
+// Estimate paper brightness in tiles using the 90th percentile. Interpolate
+// across tile centers so the correction does not create seams for the marker
+// detector. The bounded stretch recovers washed-out ink without binarizing it.
+_Gray _lightingCorrectedMarkerImage(_Gray source) {
+  final width = source.width, height = source.height;
+  final tileSize = math.max(32, (math.max(width, height) / 24).round());
+  final columns = (width / tileSize).ceil();
+  final rows = (height / tileSize).ceil();
+  final paper = Uint8List(columns * rows);
+  final histogram = Int32List(256);
+  for (var row = 0; row < rows; row++) {
+    final top = row * height ~/ rows, bottom = (row + 1) * height ~/ rows;
+    for (var col = 0; col < columns; col++) {
+      final left = col * width ~/ columns, right = (col + 1) * width ~/ columns;
+      histogram.fillRange(0, histogram.length, 0);
+      var samples = 0;
+      for (var y = top; y < bottom; y += 3) {
+        for (var x = left; x < right; x += 3) {
+          histogram[source.pixels[y * width + x]]++;
+          samples++;
+        }
+      }
+      var brightness = 255;
+      var brightSamples = histogram[brightness];
+      while (brightSamples * 10 < samples) {
+        brightSamples += histogram[--brightness];
+      }
+      paper[row * columns + col] = brightness;
+    }
+  }
+
+  final pixels = Uint8List(source.pixels.length);
+  for (var y = 0; y < height; y++) {
+    final gridY = ((y + .5) * rows / height - .5).clamp(0.0, rows - 1.0);
+    final top = gridY.floor() * columns, bottom = gridY.ceil() * columns;
+    final dy = gridY - gridY.floor();
+    for (var x = 0; x < width; x++) {
+      final gridX = ((x + .5) * columns / width - .5).clamp(0.0, columns - 1.0);
+      final left = gridX.floor(), right = gridX.ceil(), dx = gridX - left;
+      final upper = paper[top + left] * (1 - dx) + paper[top + right] * dx;
+      final lower =
+          paper[bottom + left] * (1 - dx) + paper[bottom + right] * dx;
+      final background = upper * (1 - dy) + lower * dy;
+      final index = y * width + x;
+      pixels[index] = (235 - 1.9 * (background - source.pixels[index]))
+          .round()
+          .clamp(0, 255);
+    }
+  }
+  return _Gray(width, height, pixels);
 }
 
 List<_Marker> _markers(
@@ -228,18 +291,101 @@ double _density(
   return sum / n;
 }
 
-ResponseMark _classify(List<double> differences, List<String> labels) {
+const _possibleMark = .065;
+const _clearMark = .33;
+const _answerLead = .20;
+const _minimumFill = .16;
+
+ResponseMark _classifyAnswer(
+  List<double> scores,
+  List<String> labels, {
+  required bool Function(int index) hasDistributedFill,
+  bool checkClearFill = false,
+  void Function(AnswerReviewReason reason)? onReview,
+}) {
+  final mark = _classify(scores, labels, reviewCompetingAnswers: true);
+  final hasClearMark = scores.any((score) => score >= _clearMark);
+  final light = mark.state == MarkState.uncertain && !hasClearMark
+      ? _isolatedLightMark(scores)
+      : null;
+  if (light != null || (checkClearFill && mark.state == MarkState.single)) {
+    final index = light ?? labels.indexOf(mark.answer);
+    if (hasDistributedFill(index)) {
+      return ResponseMark(MarkState.single, labels[index]);
+    }
+    onReview?.call(AnswerReviewReason.unevenFill);
+    return const ResponseMark(MarkState.uncertain);
+  }
+  if (mark.state == MarkState.uncertain) {
+    onReview?.call(
+      hasClearMark ? AnswerReviewReason.competing : AnswerReviewReason.faint,
+    );
+  }
+  return mark;
+}
+
+int? _isolatedLightMark(List<double> scores) {
+  const minimumScore = .20, minimumLead = .14;
+  final candidate = scores.indexWhere((score) => score >= minimumScore);
+  if (candidate < 0) return null;
+  for (var i = 0; i < scores.length; i++) {
+    if (i != candidate &&
+        (scores[i] > _possibleMark ||
+            scores[candidate] - scores[i] < minimumLead)) {
+      return null;
+    }
+  }
+  return candidate;
+}
+
+final _digitLabels = List.generate(10, (i) => '$i');
+
+DigitReading _classifyDigit(List<double> core, {List<double>? sides}) {
+  final scores = sides == null
+      ? core
+      : List.generate(core.length, (i) => math.min(core[i], sides[i]));
+  final mark = _classify(scores, _digitLabels);
+  // A solid mark can coexist with weak artifacts in other bubbles.
+  if (mark.state == MarkState.uncertain) {
+    final filled = scores.indexWhere((score) => score >= .50);
+    if (filled >= 0 &&
+        core.indexed.every((entry) => entry.$1 == filled || entry.$2 < .12)) {
+      return DigitReading(_digitLabels[filled], MarkState.single);
+    }
+  }
+  return DigitReading(
+    mark.state == MarkState.single ? mark.answer : '?',
+    mark.state,
+  );
+}
+
+ResponseMark _classify(
+  List<double> differences,
+  List<String> labels, {
+  bool reviewCompetingAnswers = false,
+}) {
   final sure = <int>[], possible = <int>[];
   for (var i = 0; i < differences.length; i++) {
-    if (differences[i] >= .33) sure.add(i);
-    if (differences[i] > .065) possible.add(i);
+    if (differences[i] >= _clearMark) sure.add(i);
+    if (differences[i] > _possibleMark) possible.add(i);
   }
   if (possible.isEmpty) return const ResponseMark(MarkState.blank);
-  if (sure.length >= 2 && sure.length == possible.length) {
-    return const ResponseMark(MarkState.multiple);
+  if (sure.length == 1) {
+    final winner = sure.single;
+    if (possible.length == 1 ||
+        (reviewCompetingAnswers &&
+            possible.every(
+              (other) =>
+                  other == winner ||
+                  differences[winner] - differences[other] >= _answerLead,
+            ))) {
+      return ResponseMark(MarkState.single, labels[winner]);
+    }
   }
-  if (sure.length == 1 && possible.length == 1) {
-    return ResponseMark(MarkState.single, labels[sure.single]);
+  if (!reviewCompetingAnswers &&
+      sure.length >= 2 &&
+      sure.length == possible.length) {
+    return const ResponseMark(MarkState.multiple);
   }
   return const ResponseMark(MarkState.uncertain);
 }

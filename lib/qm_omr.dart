@@ -297,35 +297,57 @@ _QmAlignment _qmAlignment(
 OmrRead recognizeQmSheet(Map<String, Object> input) {
   final source = _load(input['photo']! as Uint8List),
       ref = _load(input['reference']! as Uint8List);
-  final aligned = _qmWarp(source, _qmAlignment(source));
+  _QmAlignment alignment;
+  try {
+    alignment = _qmAlignment(source);
+  } on OmrException {
+    alignment = _qmAlignment(_lightingCorrectedMarkerImage(source));
+  }
+  final aligned = _qmWarp(source, alignment);
   final baseline = _qmWarp(ref, _qmAlignment(ref));
   // Sample paper beyond the circle outline. The former 8-10 px annulus
   // crossed larger Part I outlines and falsely triggered the dark-photo guard.
-  ResponseMark read(List<math.Point<double>> points, List<String> labels) {
+  double score(math.Point<double> p, {int radius = 3}) =>
+      _density(
+        aligned,
+        p.x,
+        p.y,
+        coreRadius: radius,
+        backgroundInner: 12,
+        backgroundOuter: 14,
+      ) -
+      _density(
+        baseline,
+        p.x,
+        p.y,
+        coreRadius: radius,
+        backgroundInner: 12,
+        backgroundOuter: 14,
+      );
+
+  ResponseMark read(
+    List<math.Point<double>> points,
+    List<String> labels, {
+    bool reviewCompetingAnswers = false,
+  }) {
     try {
-      final differences = points
-          .map(
-            (p) =>
-                _density(
-                  aligned,
-                  p.x,
-                  p.y,
-                  coreRadius: 3,
-                  backgroundInner: 12,
-                  backgroundOuter: 14,
-                ) -
-                _density(
-                  baseline,
-                  p.x,
-                  p.y,
-                  coreRadius: 3,
-                  backgroundInner: 12,
-                  backgroundOuter: 14,
-                ),
-          )
-          .toList();
-      final result = _classify(differences, labels);
-      return result;
+      final differences = points.map(score).toList();
+      if (!reviewCompetingAnswers) return _classify(differences, labels);
+      return _classifyAnswer(
+        differences,
+        labels,
+        hasDistributedFill: (i) {
+          const offsets = [
+            math.Point(-1.0, 0.0),
+            math.Point(1.0, 0.0),
+            math.Point(0.0, -1.0),
+            math.Point(0.0, 1.0),
+          ];
+          return offsets.every(
+            (offset) => score(points[i] + offset, radius: 2) >= _minimumFill,
+          );
+        },
+      );
     } on OmrException {
       return const ResponseMark(MarkState.uncertain);
     }
@@ -352,7 +374,7 @@ OmrRead recognizeQmSheet(Map<String, Object> input) {
         'B',
         'C',
         'D',
-      ]),
+      ], reviewCompetingAnswers: true),
     );
     crops.add(crop(xs.first - 8, y - 7, 99, 14));
   }
@@ -430,11 +452,15 @@ OmrRead recognizeQmSheet(Map<String, Object> input) {
     crops.add(crop(QmSheetGeometry.shortX[i][0] - 7, 615, 54, 160));
   }
   final code = [520.34, 530.90, 541.34].map((x) {
-    final m = read(
-      List.generate(10, (n) => QmSheetGeometry.point(x, 115.86 + 14.88 * n)),
-      List.generate(10, (n) => '$n'),
-    );
-    return DigitReading(m.state == MarkState.single ? m.answer : '?', m.state);
+    try {
+      return _classifyDigit(
+        List.generate(_digitLabels.length, (n) {
+          return score(QmSheetGeometry.point(x, 115.86 + 14.88 * n));
+        }),
+      );
+    } on OmrException {
+      return const DigitReading('?', MarkState.uncertain);
+    }
   }).toList();
   final candidate = [432.02, 442.58, 453.02, 463.58, 474.02, 484.58].map((x) {
     final mark = read(

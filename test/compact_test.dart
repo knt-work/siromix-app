@@ -11,6 +11,7 @@ import 'package:siromix/scan.dart';
 import 'package:siromix/scan_flow.dart';
 import 'package:siromix/templates.dart';
 
+import 'uneven_lighting.dart';
 import 'widget_test.dart' show MemoryStorage;
 
 void main() {
@@ -21,29 +22,48 @@ void main() {
     bool rotate = false,
     bool faint = false,
     bool multiple = false,
+    bool competingMarks = false,
     bool faintCode = false,
+    List<int>? codeGrays,
     bool doubleCode = false,
     bool blankCode = false,
     bool blurredNumerals = false,
     bool extraFaintEight = false,
   }) {
     var image = img.decodePng(reference)!;
-    void dot(double x, double y, {bool weak = false}) => img.fillCircle(
-      image,
-      x: (36.5 + x).round(),
-      y: (43 + y).round(),
-      radius: 10,
-      color: img.ColorRgb8(weak ? 170 : 15, weak ? 170 : 15, weak ? 170 : 15),
-    );
+    void dot(double x, double y, {bool weak = false, int? gray}) =>
+        img.fillCircle(
+          image,
+          x: (36.5 + x).round(),
+          y: (43 + y).round(),
+          radius: 10,
+          color: img.ColorRgb8(
+            gray ?? (weak ? 170 : 15),
+            gray ?? (weak ? 170 : 15),
+            gray ?? (weak ? 170 : 15),
+          ),
+        );
     for (var i = 0; i < 40; i++) {
       dot(
         CompactSheetGeometry.answerX(i)[i % 4],
         CompactSheetGeometry.answerY(i),
-        weak: faint && i == 6,
+        gray: faint && i == 6 ? 222 : (competingMarks && i == 1 ? 125 : null),
       );
     }
     if (multiple) {
       dot(CompactSheetGeometry.answerX(3)[0], CompactSheetGeometry.answerY(3));
+    }
+    if (competingMarks) {
+      dot(
+        CompactSheetGeometry.answerX(0)[1],
+        CompactSheetGeometry.answerY(0),
+        gray: 210,
+      );
+      dot(
+        CompactSheetGeometry.answerX(1)[2],
+        CompactSheetGeometry.answerY(1),
+        gray: 165,
+      );
     }
     if (!blankCode) {
       for (var i = 0; i < 3; i++) {
@@ -51,6 +71,7 @@ void main() {
           CompactSheetGeometry.codeX[i],
           CompactSheetGeometry.upperY[int.parse(code[i])],
           weak: faintCode && i == 1,
+          gray: codeGrays?[i],
         );
       }
     }
@@ -104,14 +125,78 @@ void main() {
     expect(r.codeText, '008');
     expect(r.answerCrops.length, 40);
   });
-  test('compact handles rotation and requires review for faint marks', () {
+  test('compact requires review for faint and competing clear answers', () {
     final r = recognizeCompactSheet({
       'photo': marked(rotate: true, faint: true, multiple: true),
       'reference': reference,
     });
     expect(r.codeText, '008');
     expect(r.answers[6].state, MarkState.uncertain);
-    expect(r.answers[3].state, MarkState.multiple);
+    expect(r.answers[3].state, MarkState.uncertain);
+    expect(r.answerReviewDetails[6]?.reason, AnswerReviewReason.faint);
+    expect(r.answerReviewDetails[3]?.reason, AnswerReviewReason.competing);
+    expect(r.answerReviewDetails[3]?.scores, hasLength(4));
+  });
+  test('NTL accepts light distributed fill but reviews a dark speck', () {
+    final image = img.decodePng(reference)!;
+    void mark(int row, int option, int radius, int gray, {int shift = 0}) {
+      img.fillCircle(
+        image,
+        x: (36.5 + CompactSheetGeometry.answerX(row)[option]).round() + shift,
+        y: (43 + CompactSheetGeometry.answerY(row)).round(),
+        radius: radius,
+        color: img.ColorRgb8(gray, gray, gray),
+      );
+    }
+
+    mark(7, 3, 10, 176);
+    mark(7, 2, 10, 244);
+    mark(8, 3, 6, 0, shift: 5);
+    mark(9, 3, 10, 176);
+    mark(9, 2, 10, 212);
+    final result = recognizeCompactSheet({
+      'photo': img.encodePng(image),
+      'reference': reference,
+    });
+    expect(
+      result.answers[7].state,
+      MarkState.single,
+      reason: result.answerReviewDetails[7]?.scores.toString(),
+    );
+    expect(result.answers[7].answer, 'D');
+    expect(result.answers[8].state, MarkState.uncertain);
+    expect(
+      result.answerReviewDetails[8]?.reason,
+      AnswerReviewReason.unevenFill,
+    );
+    expect(result.answers[9].state, MarkState.uncertain);
+  });
+  test('NTL accepts a large lead and reviews a small lead', () {
+    final result = recognizeCompactSheet({
+      'photo': marked(competingMarks: true),
+      'reference': reference,
+    });
+    expect(result.answers[0].state, MarkState.single);
+    expect(result.answers[0].answer, 'A');
+    expect(result.answers[1].state, MarkState.uncertain);
+  });
+  test('NTL aligns a washed-out strip and reads the original grayscale', () {
+    final result = recognizeCompactSheet({
+      'photo': withUnevenLighting(marked(faint: true)),
+      'reference': reference,
+    });
+    expect(result.codeText, '008');
+    expect(result.answers[6].state, MarkState.uncertain);
+    for (var i = 0; i < 40; i++) {
+      if (i != 6) {
+        expect(
+          result.answers[i].state,
+          MarkState.single,
+          reason: 'Row ${i + 1}',
+        );
+        expect(result.answers[i].answer, 'ABCD'[i % 4], reason: 'Row ${i + 1}');
+      }
+    }
   });
   test('QM sheet is rejected by NTL reader', () {
     expect(
@@ -394,6 +479,97 @@ void main() {
     });
     expect(multiple.code[0].state, MarkState.multiple);
     expect(multiple.codeClear, false);
+  });
+  test('NTL reads three low contrast digits with independent ink evidence', () {
+    final result = recognizeCompactSheet({
+      'photo': marked(code: '485', codeGrays: [150, 192, 145]),
+      'reference': reference,
+    });
+    expect(result.codeText, '485');
+    expect(result.codeClear, true);
+  });
+  test('NTL accepts a solid digit amid weak printed-bubble artifacts', () {
+    final photo = img.decodePng(marked(code: '132'))!;
+    for (final digit in [0, 1, 2, 3, 5]) {
+      img.fillCircle(
+        photo,
+        x: (36.5 + CompactSheetGeometry.codeX[0]).round(),
+        y: (43 + CompactSheetGeometry.upperY[digit]).round(),
+        radius: digit == 1 ? 12 : 11,
+        color: digit == 1
+            ? img.ColorRgb8(15, 15, 15)
+            : img.ColorRgb8(214, 214, 214),
+      );
+    }
+    final result = recognizeCompactSheet({
+      'photo': img.encodePng(photo),
+      'reference': reference,
+    });
+    expect(result.codeText, '132');
+    expect(result.codeClear, true);
+  });
+  test('NTL retries one faint column while preserving two clear digits', () {
+    for (final grays in [
+      [150, 15, 15],
+      [15, 145, 15],
+    ]) {
+      final result = recognizeCompactSheet({
+        'photo': marked(code: '485', codeGrays: grays),
+        'reference': reference,
+      });
+      expect(result.codeText, '485', reason: 'Digit shades: $grays');
+      expect(result.codeClear, true);
+    }
+  });
+  testWidgets('NTL suggests the matching code without selecting it', (t) async {
+    const path = ['2026', 'Exam', '6', 'Math'];
+    final repo = ExamRepository(MemoryStorage());
+    await repo.load();
+    await repo.update((data) {
+      for (final code in ['132', '485']) {
+        data.addCode(path, code);
+        final key = ExamKey(templateId: SheetTemplate.compact.id, count: 1);
+        key.answers[0] = 'A';
+        data.saveKey(path, code, key);
+      }
+    });
+    final picture = img.encodePng(img.Image(width: 5, height: 5));
+    await t.pumpWidget(
+      MaterialApp(
+        home: ScannedResult(
+          repository: repo,
+          contextPath: path,
+          template: SheetTemplate.compact,
+          read: OmrRead(
+            answers: List.filled(40, const ResponseMark(MarkState.single, 'A')),
+            candidate: const [],
+            code: const [
+              DigitReading('4', MarkState.single),
+              DigitReading('?', MarkState.uncertain),
+              DigitReading('5', MarkState.single),
+            ],
+            aligned: picture,
+            answerCrops: List.filled(40, picture),
+            candidateCrop: Uint8List(0),
+            codeCrop: picture,
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Mã đề gợi ý: 485. Chọn để xác nhận.'), findsOneWidget);
+    final dropdown = find.byType(DropdownButtonFormField<String>);
+    final field = t.widget<DropdownButtonFormField<String>>(dropdown);
+    expect(field.initialValue, isNull);
+    await t.ensureVisible(dropdown);
+    await t.tap(dropdown);
+    await t.pumpAndSettle();
+    expect(find.text('485 · Gợi ý').hitTestable(), findsOneWidget);
+    await t.tap(find.text('485 · Gợi ý').hitTestable());
+    await t.pumpAndSettle();
+    expect(
+      t.widget<DropdownButtonFormField<String>>(dropdown).initialValue,
+      '485',
+    );
   });
   test('compact code detector supports all ten printed numerals', () {
     for (final code in ['012', '345', '678', '909']) {

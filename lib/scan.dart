@@ -739,6 +739,7 @@ class _ScannedResultState extends State<ScannedResult> {
     final grading = GradeResult(key, selectedResponses(key));
     final response = responses[index];
     final pending = response.state == MarkState.uncertain;
+    final detail = pending ? widget.read.answerReviewDetails[index] : null;
     final correct = grading.matches(logical);
     final partial =
         key.kind(logical) == QuestionKind.trueFalse &&
@@ -845,6 +846,25 @@ class _ScannedResultState extends State<ScannedResult> {
                   const SizedBox(height: 4),
                   subtitle,
                 ],
+                if (detail != null) ...[
+                  const SizedBox(height: 4),
+                  Text(switch (detail.reason) {
+                    AnswerReviewReason.faint => 'Ô tô chưa đủ đậm.',
+                    AnswerReviewReason.competing => 'Có nhiều ô tô cạnh tranh.',
+                    AnswerReviewReason.unevenFill =>
+                      'Nét tô chưa phủ đều bên trong ô.',
+                    AnswerReviewReason.darkPaper => 'Nền giấy quanh ô quá tối.',
+                  }, style: TextStyle(color: foreground, fontSize: 12)),
+                  if (detail.scores.isNotEmpty)
+                    Text(
+                      List.generate(
+                        detail.scores.length,
+                        (i) =>
+                            '${'ABCD'[i]} ${detail.scores[i].toStringAsFixed(3)}',
+                      ).join(' · '),
+                      style: TextStyle(color: foreground, fontSize: 12),
+                    ),
+                ],
               ],
             );
           },
@@ -907,6 +927,23 @@ class _ScannedResultState extends State<ScannedResult> {
   @override
   Widget build(BuildContext context) {
     final graded = result;
+    final codes = keys.keys.toList();
+    final digits = widget.read.code;
+    final suggestedCodes =
+        widget.template == SheetTemplate.compact &&
+            digits.length == 3 &&
+            digits.where((digit) => digit.state == MarkState.single).length == 2
+        ? codes.where((code) {
+            if (!RegExp(r'^\d{3}$').hasMatch(code)) return false;
+            for (var i = 0; i < digits.length; i++) {
+              if (digits[i].state == MarkState.single &&
+                  digits[i].value != code[i]) {
+                return false;
+              }
+            }
+            return true;
+          }).toSet()
+        : const <String>{};
     return PopScope(
       canPop: !confirming,
       child: Scaffold(
@@ -1003,17 +1040,33 @@ class _ScannedResultState extends State<ScannedResult> {
                           'Mã đề đọc được: ${widget.read.codeText}. Chọn bộ đáp án đúng trước khi xác nhận.',
                           warning: true,
                         ),
+                      if (suggestedCodes.length == 1)
+                        secondary(
+                          'Mã đề gợi ý: ${suggestedCodes.single}. Chọn để xác nhận.',
+                        ),
                       SiroInput(
                         child: DropdownButtonFormField<String>(
                           initialValue: selectedCode,
                           isExpanded: true,
                           decoration: const InputDecoration(labelText: 'Mã đề'),
-                          items: keys.keys
-                              .map(
-                                (c) =>
-                                    DropdownMenuItem(value: c, child: Text(c)),
-                              )
-                              .toList(),
+                          items:
+                              [
+                                    ...suggestedCodes,
+                                    ...codes.where(
+                                      (code) => !suggestedCodes.contains(code),
+                                    ),
+                                  ]
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(
+                                        suggestedCodes.contains(c)
+                                            ? '$c · Gợi ý'
+                                            : c,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged: confirming
                               ? null
                               : (c) => setState(() => selectedCode = c),

@@ -276,12 +276,19 @@ OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
         recovery: true,
       );
     } on OmrException {
-      usedBorder = true;
-      alignment =
-          _compactBorderAlignment(source, markerImage) ??
-          (throw const OmrException(
+      final borderAlignment = _compactBorderAlignment(source, markerImage);
+      if (borderAlignment != null) {
+        usedBorder = true;
+        alignment = borderAlignment;
+      } else {
+        try {
+          alignment = _compactAlignment(_lightingCorrectedMarkerImage(source));
+        } on OmrException {
+          throw const OmrException(
             'Chưa căn được khung NTL. Giữ rõ đường viền và vùng đáp án rồi chụp lại.',
-          ));
+          );
+        }
+      }
     }
     recovered = true;
   }
@@ -294,74 +301,79 @@ OmrRead recognizeCompactSheet(Map<String, Uint8List> input) {
         : const math.Point(0, 0),
   );
 
-  ResponseMark read(
-    List<math.Point<double>> points,
-    List<String> labels,
-    math.Point<int> offset,
-  ) {
+  final reviewDetails = <int, AnswerReviewDetail>{};
+  ResponseMark read(int index) {
+    const labels = ['A', 'B', 'C', 'D'];
+    final points = CompactSheetGeometry.answerX(index)
+        .map((x) => math.Point(x, CompactSheetGeometry.answerY(index)))
+        .toList();
+    final offset = blockOffsets[index ~/ 10];
+    var differences = <double>[];
+    ResponseMark review(AnswerReviewReason reason) {
+      reviewDetails[index] = AnswerReviewDetail(reason, differences);
+      return const ResponseMark(MarkState.uncertain);
+    }
+
     try {
-      final differences = points
+      differences = points
           .map(
             (p) =>
                 _compactDensity(aligned, p.x + offset.x, p.y + offset.y) -
                 _compactDensity(baseline, p.x, p.y),
           )
           .toList();
-      final mark = _classify(differences, labels);
-      if (recovered && mark.state == MarkState.single) {
-        final chosen = points[labels.indexOf(mark.answer)];
-        // A filled bubble should darken several parts of its core.
-        for (final offset in const [
-          math.Point(-4.0, 0.0),
-          math.Point(4.0, 0.0),
-          math.Point(0.0, -4.0),
-          math.Point(0.0, 4.0),
-        ]) {
-          final p = chosen + offset;
-          if (_density(
-                    aligned,
-                    p.x + offset.x,
-                    p.y + offset.y,
-                    coreRadius: 4,
-                    backgroundInner: 20,
-                    backgroundOuter: 23,
-                  ) -
-                  _density(
-                    baseline,
-                    p.x,
-                    p.y,
-                    coreRadius: 4,
-                    backgroundInner: 20,
-                    backgroundOuter: 23,
-                  ) <
-              .16) {
-            return const ResponseMark(MarkState.uncertain);
+      return _classifyAnswer(
+        differences,
+        labels,
+        checkClearFill: recovered,
+        onReview: review,
+        hasDistributedFill: (index) {
+          final chosen = points[index];
+          // A filled bubble should darken several parts of its core.
+          for (final sampleOffset in const [
+            math.Point(-4.0, 0.0),
+            math.Point(4.0, 0.0),
+            math.Point(0.0, -4.0),
+            math.Point(0.0, 4.0),
+          ]) {
+            final p = chosen + sampleOffset;
+            if (_density(
+                      aligned,
+                      p.x + offset.x,
+                      p.y + offset.y,
+                      coreRadius: 4,
+                      backgroundInner: 20,
+                      backgroundOuter: 23,
+                    ) -
+                    _density(
+                      baseline,
+                      p.x,
+                      p.y,
+                      coreRadius: 4,
+                      backgroundInner: 20,
+                      backgroundOuter: 23,
+                    ) <
+                _minimumFill) {
+              return false;
+            }
           }
-        }
-      }
-      return mark;
+          return true;
+        },
+      );
     } on OmrException {
       // A shadow on an unused question must not block grading active questions.
       // Darkness on active rows remains uncertain and requires teacher review.
-      return const ResponseMark(MarkState.uncertain);
+      return review(AnswerReviewReason.darkPaper);
     }
   }
 
-  final answers = List.generate(
-    40,
-    (i) => read(
-      CompactSheetGeometry.answerX(i)
-          .map((x) => math.Point(x, CompactSheetGeometry.answerY(i)))
-          .toList(),
-      ['A', 'B', 'C', 'D'],
-      blockOffsets[i ~/ 10],
-    ),
-  );
+  final answers = List.generate(40, read);
   final code = _readCompactCode(aligned, baseline);
   return OmrRead(
     answers: answers,
     candidate: const [],
     code: code,
+    answerReviewDetails: reviewDetails,
     aligned: _png(aligned),
     candidateCrop: Uint8List(0),
     codeCrop: _png(aligned, x: 425, y: 390, width: 150, height: 570),
@@ -528,7 +540,7 @@ List<DigitReading> _readCompactCode(_Gray photo, _Gray baseline) {
     return values.map((v) => v - noise).toList();
   }
 
-  return CompactSheetGeometry.codeX.map((x) {
+  final columns = CompactSheetGeometry.codeX.map((x) {
     try {
       final core = normalize(
         List.generate(10, (i) {
@@ -543,21 +555,73 @@ List<DigitReading> _readCompactCode(_Gray photo, _Gray baseline) {
               _compactDigitSides(baseline, x, y);
         }),
       );
-      final mark = _classify(
-        List.generate(10, (i) => math.min(core[i], sides[i])),
-        List.generate(10, (i) => '$i'),
-      );
-      return DigitReading(
-        mark.state == MarkState.single ? mark.answer : '?',
-        mark.state,
-      );
+      final reading = _classifyDigit(core, sides: sides);
+      // Try a wider band for light pencil only when the regular reader found
+      // no clear digit. The same digit must lead independently in both views.
+      if (reading.state != MarkState.single &&
+          core.indexed.every(
+            (entry) => math.min(entry.$2, sides[entry.$1]) < _clearMark,
+          )) {
+        final broader = normalize(
+          List.generate(10, (i) {
+            final y = CompactSheetGeometry.upperY[i];
+            return _compactDigitSides(photo, x, y, innerX: 6) -
+                _compactDigitSides(baseline, x, y, innerX: 6);
+          }),
+        );
+        final digits = List.generate(10, (i) => i);
+        final best = digits.reduce((a, b) => core[a] >= core[b] ? a : b);
+        if (core[best] >= .11 &&
+            broader[best] > _possibleMark &&
+            digits.every(
+              (i) =>
+                  i == best ||
+                  (core[best] - core[i] >= .055 &&
+                      broader[best] - broader[i] >= .020 &&
+                      (core[i] <= _possibleMark || sides[i] <= _possibleMark)),
+            )) {
+          return (
+            regular: reading,
+            fallback: '$best',
+            core: core[best],
+            side: sides[best],
+          );
+        }
+      }
+      return (regular: reading, fallback: null, core: 0.0, side: 0.0);
     } on OmrException {
-      return const DigitReading('?', MarkState.uncertain);
+      return (
+        regular: const DigitReading('?', MarkState.uncertain),
+        fallback: null,
+        core: 0.0,
+        side: 0.0,
+      );
     }
+  }).toList();
+  // A weak mark can be accepted when the whole field is low contrast, with
+  // independent evidence for all three digits and two stronger anchors.
+  final lowContrastField =
+      columns.every((column) => column.fallback != null) &&
+      columns.where((column) => column.core >= .22).length >= 2;
+  final hasTwoClearDigits =
+      columns
+          .where((column) => column.regular.state == MarkState.single)
+          .length ==
+      2;
+  return columns.map((column) {
+    final digit = column.fallback;
+    // A lone retry needs stronger direct evidence outside the printed
+    // numeral than the whole-field low-contrast recovery.
+    if (digit != null &&
+        (lowContrastField ||
+            (hasTwoClearDigits && column.core >= .22 && column.side >= .12))) {
+      return DigitReading(digit, MarkState.single);
+    }
+    return column.regular;
   }).toList();
 }
 
-double _compactDigitSides(_Gray image, double x, double y) {
+double _compactDigitSides(_Gray image, double x, double y, {int innerX = 8}) {
   final paper = <double>[];
   for (var dy = -23; dy <= 23; dy += 2) {
     for (var dx = -23; dx <= 23; dx += 2) {
@@ -571,8 +635,8 @@ double _compactDigitSides(_Gray image, double x, double y) {
   var sum = 0.0, count = 0;
   for (var dy = -11; dy <= 11; dy++) {
     for (var dx = -11; dx <= 11; dx++) {
-      // The central +/-8 pixel strip contains the printed number and blur.
-      if (dx.abs() <= 8 || dx * dx + dy * dy > 121) continue;
+      // Exclude the center strip occupied by the printed number.
+      if (dx.abs() <= innerX || dx * dx + dy * dy > 121) continue;
       sum += (1 - image.at(x + dx, y + dy) / white).clamp(0, 1);
       count++;
     }

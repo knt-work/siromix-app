@@ -6,6 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:siromix/data.dart';
 import 'package:siromix/templates.dart';
+
+import 'uneven_lighting.dart';
+
 import 'package:siromix/omr.dart';
 
 import 'widget_test.dart' show MemoryStorage;
@@ -115,17 +118,26 @@ void main() {
     expect(backup.data.papers.single.key.parts.twoAnswers[0], 'TFTF');
   });
   final reference = File('assets/templates/qm2025-a4-v1.png').readAsBytesSync();
-  Uint8List marked({bool rotate = false, bool ambiguous = false}) {
+  Uint8List marked({
+    bool rotate = false,
+    bool ambiguous = false,
+    bool weakMarks = false,
+  }) {
     var image = img.decodePng(reference)!;
-    void fill(double x, double y, {int radius = 6}) => img.fillCircle(
-      image,
-      x: (x * 2).round(),
-      y: (y * 2).round(),
-      radius: radius,
-      color: img.ColorRgb8(15, 15, 15),
-    );
+    void fill(double x, double y, {int radius = 6, int gray = 15}) =>
+        img.fillCircle(
+          image,
+          x: (x * 2).round(),
+          y: (y * 2).round(),
+          radius: radius,
+          color: img.ColorRgb8(gray, gray, gray),
+        );
     for (var i = 0; i < 40; i++) {
-      fill(QmSheetGeometry.xs[i ~/ 10][i % 4], QmSheetGeometry.oneY[i % 10]);
+      fill(
+        QmSheetGeometry.xs[i ~/ 10][i % 4],
+        QmSheetGeometry.oneY[i % 10],
+        gray: weakMarks && i == 0 ? 190 : 15,
+      );
     }
     for (var i = 0; i < 8; i++) {
       for (var j = 0; j < 4; j++) {
@@ -147,7 +159,14 @@ void main() {
         radius: 5,
       );
     }
-    if (ambiguous) fill(QmSheetGeometry.xs[0][1], QmSheetGeometry.oneY[0]);
+    if (ambiguous) {
+      fill(QmSheetGeometry.xs[0][1], QmSheetGeometry.oneY[0]);
+      fill(QmSheetGeometry.xs[0][2], QmSheetGeometry.oneY[1], gray: 205);
+    }
+    if (weakMarks) {
+      fill(520.34, 115.86 + 14.88 * 6, radius: 5, gray: 230);
+      fill(530.9, 115.86 + 14.88 * 6, radius: 5, gray: 210);
+    }
     if (rotate) image = img.copyRotate(image, angle: 90);
     return Uint8List.fromList(img.encodeJpg(image, quality: 92));
   }
@@ -157,6 +176,16 @@ void main() {
     expect(r.answers.length, 54);
     expect(r.answers.every((m) => m.state == MarkState.blank), true);
     expect(r.codeClear, false);
+  });
+  test('QM uses common ABCD and digit confidence rules', () {
+    final result = recognizeQmSheet({
+      'photo': marked(weakMarks: true),
+      'reference': reference,
+    });
+    expect(result.answers.first.state, MarkState.single);
+    expect(result.answers.first.answer, 'A');
+    expect(result.codeText, '2?9');
+    expect(result.code[1].state, MarkState.uncertain);
   });
   test('QM reads all question groups, three-digit code, true/false and decimal columns', () {
     final r = recognizeQmSheet({'photo': marked(), 'reference': reference});
@@ -173,11 +202,33 @@ void main() {
     expect(r.answers.skip(48).map((v) => v.answer), everyElement('1,5'));
     expect(r.answerCrops.length, 54);
   });
-  test('QM rotation/JPEG, live probe and multiple marks', () {
+  test('QM aligns a washed-out strip and reads all answer sections', () {
+    final result = recognizeQmSheet({
+      'photo': withUnevenLighting(marked()),
+      'reference': reference,
+    });
+    expect(result.codeText, '209');
+    expect(result.codeClear, true);
+    expect(
+      result.answers.take(40).map((mark) => mark.answer).join(),
+      List.generate(40, (i) => 'ABCD'[i % 4]).join(),
+    );
+    expect(
+      result.answers.skip(40).take(8).map((mark) => mark.answer),
+      everyElement('TFTF'),
+    );
+    expect(
+      result.answers.skip(48).map((mark) => mark.answer),
+      everyElement('1,5'),
+    );
+  });
+  test('QM rotation/JPEG, live probe and competing ABCD marks', () {
     final bytes = marked(rotate: true, ambiguous: true);
     final r = recognizeQmSheet({'photo': bytes, 'reference': reference});
     expect(r.codeText, '209');
-    expect(r.answers[0].state, MarkState.multiple);
+    expect(r.answers[0].state, MarkState.uncertain);
+    expect(r.answers[1].state, MarkState.single);
+    expect(r.answers[1].answer, 'B');
     expect(r.answers[48].answer, '1,5');
     final image = img.copyResize(img.decodeImage(bytes)!, width: 800);
     final pixels = Uint8List(image.width * image.height);
